@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "fh",
+    "slug": "fh",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "fh260app",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+
+    "splash": {
+      "backgroundColor": "#0B3F73"
+    },
+
+    "ios": {
+      "supportsTablet": true
+    },
+
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/fhlogo.jpg",
+        "backgroundColor": "#0B3F73"
+      },
+      "edgeToEdgeEnabled": true
+    },
+
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/fhlogo.jpg",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#0B3F73"
+        }
+      ]
+    ],
+
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

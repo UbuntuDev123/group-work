@@ -1,118 +1,199 @@
+import { MaterialIcons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
 import { Stack } from "expo-router";
-import React, { useState } from "react";
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from "react-native";
+import { useState } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-export default function DownloadsScreen() {
+type Receipt = {
+  reference: string;
+  date: string;
+  amount: string;
+  balance: string;
+  applicant: string;
+};
+
+const RECEIPTS: Receipt[] = [
+  {
+    reference: "125",
+    date: "11/25/2025",
+    amount: "KES 48,000.00",
+    balance: "KES 0.00",
+    applicant: "Kelvine",
+  },
+  {
+    reference: "126",
+    date: "10/12/2025",
+    amount: "KES 30,000.00",
+    balance: "KES 0.00",
+    applicant: "Kelvine",
+  },
+];
+
+export default function Downloads() {
   const [duration, setDuration] = useState("ANNUALLY");
-
-  // Example static data (in real app, fetch from API)
-  const receipts = [
-    { ref: "FH-001", date: "2025-09-01", amount: "1500", balance: "500", applicant: "Victor", link: "View" },
-    { ref: "FH-002", date: "2025-08-15", amount: "2000", balance: "0", applicant: "Sarah", link: "View" },
-  ];
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Stack.Screen options={{ headerShown: false }} />
+      <Stack.Screen options={{ title: "Downloads" }} />
 
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Downloadable Receipts</Text>
-        </View>
-
-        {/* Filter */}
-        <View style={styles.filter}>
-          <Text style={styles.label}>Select Receipt Duration:</Text>
-          <Picker
-  selectedValue={duration}
-  style={styles.picker}
-  onValueChange={setDuration} // no need for extra arrow fn
->
-
-            <Picker.Item label="Annually" value="ANNUALLY" />
-            <Picker.Item label="Three-Quarter" value="THREE-QUARTER" />
-            <Picker.Item label="Half-Yearly" value="HALF-YEARLY" />
-            <Picker.Item label="Quarterly" value="QUARTERLY" />
-            <Picker.Item label="1 Month" value="1-MONTH" />
-          </Picker>
-        </View>
-
-        {/* Table */}
-        <View style={styles.table}>
-          <View style={styles.tableRowHeader}>
-            <Text style={styles.th}>Reference</Text>
-            <Text style={styles.th}>Date</Text>
-            <Text style={styles.th}>Amount</Text>
-            <Text style={styles.th}>Balance</Text>
-            <Text style={styles.th}>Applicant</Text>
-            <Text style={styles.th}>Link</Text>
-          </View>
-          {receipts.map((r, i) => (
-            <View key={i} style={[styles.tableRow, i % 2 === 0 && styles.rowAlt]}>
-              <Text style={styles.td}>{r.ref}</Text>
-              <Text style={styles.td}>{r.date}</Text>
-              <Text style={styles.td}>{r.amount}</Text>
-              <Text style={styles.td}>{r.balance}</Text>
-              <Text style={styles.td}>{r.applicant}</Text>
-              <TouchableOpacity>
-                <Text style={styles.link}>{r.link}</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-        </View>
-      </ScrollView>
-
-      {/* Footer */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>© 2025 Fh260. All rights reserved.</Text>
-        {/* <Text style={styles.footerLinks}>Home | Back Page | Sign In</Text> */}
+      {/* HEADER */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Downloadable Receipts</Text>
       </View>
+
+      <ScrollView contentContainerStyle={styles.scroll}>
+        {/* FILTER */}
+        <View style={styles.filterCard}>
+          <Text style={styles.filterLabel}>Select Receipt Duration</Text>
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={duration}
+              onValueChange={(value) => setDuration(value)}
+            >
+              <Picker.Item label="Annually" value="ANNUALLY" />
+              <Picker.Item label="Three-Quarter" value="THREE-QUARTER" />
+              <Picker.Item label="Half-Yearly" value="HALF-YEARLY" />
+              <Picker.Item label="Quarterly" value="QUARTERLY" />
+              <Picker.Item label="1 Month" value="1-MONTH" />
+            </Picker>
+          </View>
+        </View>
+
+        {/* RECEIPTS */}
+        {RECEIPTS.map((item, index) => (
+          <View key={index} style={styles.receiptCard}>
+            <View style={styles.receiptRow}>
+              <Text style={styles.label}>Reference</Text>
+              <Text style={styles.value}>{item.reference}</Text>
+            </View>
+
+            <View style={styles.receiptRow}>
+              <Text style={styles.label}>Date</Text>
+              <Text style={styles.value}>{item.date}</Text>
+            </View>
+
+            <View style={styles.receiptRow}>
+              <Text style={styles.label}>Total Amount</Text>
+              <Text style={styles.amount}>{item.amount}</Text>
+            </View>
+
+            <View style={styles.receiptRow}>
+              <Text style={styles.label}>Balance</Text>
+              <Text style={styles.balance}>{item.balance}</Text>
+            </View>
+
+            <View style={styles.receiptRow}>
+              <Text style={styles.label}>Applicant</Text>
+              <Text style={styles.value}>{item.applicant}</Text>
+            </View>
+
+            <TouchableOpacity style={styles.viewBtn}>
+              <MaterialIcons name="receipt" size={18} color="#fff" />
+              <Text style={styles.viewBtnText}>View Receipt</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+      </ScrollView>
     </View>
   );
 }
 
+/* ---------- STYLES ---------- */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
-  scroll: { padding: 16, paddingBottom: 80 },
+  container: {
+    flex: 1,
+    backgroundColor: "#f2f2f2",
+  },
 
-  header: { marginBottom: 15, alignItems: "center" },
-  headerTitle: { fontSize: 20, fontWeight: "bold", color: "#003366" },
+  scroll: {
+    padding: 15,
+  },
 
-  filter: {
+  header: {
     backgroundColor: "#fff",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 15,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  label: { fontWeight: "600", color: "#003366", marginBottom: 8 },
-  picker: { borderColor: "#ddd", borderWidth: 1, borderRadius: 6 },
-
-  table: { backgroundColor: "#fff", borderRadius: 8, overflow: "hidden" },
-  tableRowHeader: {
-    flexDirection: "row",
-    backgroundColor: "#003366",
-    paddingVertical: 10,
-    paddingHorizontal: 5,
-  },
-  th: { flex: 1, color: "#fff", fontWeight: "bold", fontSize: 12 },
-
-  tableRow: { flexDirection: "row", paddingVertical: 10, paddingHorizontal: 5 },
-  rowAlt: { backgroundColor: "#f9f9f9" },
-  td: { flex: 1, fontSize: 12 },
-  link: { color: "#0066cc", fontWeight: "600" },
-
-  footer: {
-    padding: 12,
-    backgroundColor: "#003366",
+    padding: 15,
     alignItems: "center",
   },
-  footerText: { color: "#fff", fontSize: 12 },
-  footerLinks: { color: "#ffcc00", marginTop: 5, fontSize: 12, fontWeight: "600" },
+
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+
+  filterCard: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
+
+  filterLabel: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 5,
+  },
+
+  pickerWrapper: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+
+  receiptCard: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
+
+  receiptRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+
+  label: {
+    fontSize: 12,
+    color: "#666",
+  },
+
+  value: {
+    fontSize: 13,
+    fontWeight: "500",
+  },
+
+  amount: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#0B3F73",
+  },
+
+  balance: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "green",
+  },
+
+  viewBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#8B0000",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+
+  viewBtnText: {
+    color: "#fff",
+    marginLeft: 6,
+    fontWeight: "bold",
+  },
 });

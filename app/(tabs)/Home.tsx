@@ -69,16 +69,16 @@ export default function Home() {
         {/* QUICK ACTIONS */}
         <View style={styles.actionsRow}>
           {[
-            { label: "Track", icon: "account-balance", route: "Track" },
-            { label: "Apply", icon: "assignment", route: "Apply" },
-            { label: "Receipts", icon: "receipt", route: "Receipts" },
-            { label: "Downloads", icon: "download", route: "Downloads" },
+            { label: "Track", icon: "account-balance", route: "/Track" },
+            { label: "Apply", icon: "assignment", route: "/Apply" },
+            { label: "Receipts", icon: "receipt", route: "/Receipts" },
+            { label: "Downloads", icon: "download", route: "/Downloads" },
           ].map((item, i) => (
             <TouchableOpacity
               key={i}
               style={styles.actionItem}
               activeOpacity={0.7}
-              onPress={() => router.push(item.route)}
+              onPress={() => router.push(item.route as any)}
             >
               <View style={styles.actionIcon}>
                 <MaterialIcons
@@ -103,16 +103,25 @@ export default function Home() {
         {/* ADMIN / TRANSFER / REMINDER */}
         <View style={styles.actionsRow}>
           {[
-            { label: "Admin", icon: "admin-panel-settings" },
-            { label: "Transfer", icon: "swap-horiz" },
-            { label: "Reminder", icon: "notifications-active" },
+            { label: "Admin", icon: "admin-panel-settings", tab: "/Admin" },
+            { label: "Transfer", icon: "swap-horiz", tab: "/Transfer" },
+            {
+              label: "Reminder",
+              icon: "notifications-active",
+              tab: "/Reminder",
+            },
           ].map((item, i) => (
-            <View key={i} style={styles.actionItem}>
+            <TouchableOpacity
+              key={i}
+              style={styles.actionItem}
+              activeOpacity={0.7}
+              onPress={() => router.push(item.tab as any)}
+            >
               <View style={styles.redCircle}>
                 <MaterialIcons name={item.icon as any} size={22} color="#fff" />
               </View>
               <Text style={styles.actionText}>{item.label}</Text>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
 

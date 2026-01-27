@@ -1,199 +1,244 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
-import { FontAwesome5 } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
+import { Stack } from "expo-router";
+import { useState } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-export default function AdminScreen() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [requests, setRequests] = useState([
-    {
-      name: "John Doe",
-      requestType: "Financial Aid",
-      category: "Education",
-      subCategory: "Tuition",
-      description: "Tuition fees for secondary school",
-      amount: 500,
-      quantity: 1,
-      transactionCost: 20,
-      date: "2025-04-09",
-    },
-    {
-      name: "Mary Wanjiku",
-      requestType: "Medical Support",
-      category: "Health",
-      subCategory: "Medication",
-      description: "Monthly diabetes medication",
-      amount: 75,
-      quantity: 2,
-      transactionCost: 0,
-      date: "2025-04-08",
-    },
-  ]);
-
-  const [selectedRequest, setSelectedRequest] = useState<any>(null);
-  const [message, setMessage] = useState("");
-
-  const handleLogin = () => {
-    if (username === "test" && password === "1234") {
-      setIsLoggedIn(true);
-    } else {
-      setMessage("Invalid username or password.");
-    }
-  };
-
-  const handleAction = (index: number, action: string) => {
-    setMessage("⏳ Processing...");
-    setTimeout(() => {
-      const updated = [...requests];
-      updated.splice(index, 1);
-      setRequests(updated);
-      setSelectedRequest(null);
-      setMessage(`✅ Task ${action}`);
-    }, 2000);
-  };
+export default function Admin() {
+  const [receiptType, setReceiptType] = useState("Uploaded");
+  const [country, setCountry] = useState("All");
+  const [user, setUser] = useState("All");
 
   return (
     <View style={styles.container}>
-      {/* HEADER with top-right Admin button */}
-      <View style={styles.header}>
-        <Text style={styles.headerText}>KCAU</Text>
-        <TouchableOpacity style={styles.adminButton}>
-          <FontAwesome5 name="user-shield" size={20} color="#fff" />
-        </TouchableOpacity>
+      <Stack.Screen options={{ headerShown: false }} />
+
+      {/* TOP BAR */}
+      <View style={styles.topBar}>
+        <Text style={styles.title}>Admin Dashboard</Text>
+        <Ionicons name="settings-outline" size={22} color="#8B0000" />
       </View>
 
-      {!isLoggedIn ? (
-        <View style={styles.loginBox}>
-          <Text style={styles.title}>Admin Login</Text>
-          <TextInput
-            placeholder="Username"
-            style={styles.input}
-            value={username}
-            onChangeText={setUsername}
-          />
-          <TextInput
-            placeholder="Password"
-            style={styles.input}
-            value={password}
-            secureTextEntry
-            onChangeText={setPassword}
-          />
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Login</Text>
-          </TouchableOpacity>
-          {message ? <Text style={{ color: "red" }}>{message}</Text> : null}
+      <ScrollView contentContainerStyle={styles.scroll}>
+        {/* ===== RECEIPTS ===== */}
+        <Text style={styles.sectionTitle}>Receipts</Text>
+
+        <View style={styles.filtersRow}>
+          {["Uploaded", "Pending", "Transferred"].map((item) => (
+            <FilterChip
+              key={item}
+              label={item}
+              active={receiptType === item}
+              onPress={() => setReceiptType(item)}
+            />
+          ))}
         </View>
-      ) : (
-        <ScrollView style={styles.dashboard}>
-          <Text style={styles.title}>Incoming Requests</Text>
 
-          {requests.map((req, index) => {
-            const totalAmount = req.amount * req.quantity + req.transactionCost;
-            return (
-              <View key={index} style={styles.card}>
-                <Text style={styles.name}>{req.name}</Text>
-                <Text>Date: {req.date}</Text>
-                <Text>Total: ${totalAmount}</Text>
-                <TouchableOpacity
-                  style={styles.clearBtn}
-                  onPress={() => setSelectedRequest({ ...req, index })}
-                >
-                  <Text style={{ color: "#fff", textAlign: "center" }}>Clear</Text>
-                </TouchableOpacity>
-              </View>
-            );
-          })}
+        <View style={styles.filtersRow}>
+          <FilterChip label={`Country: ${country}`} />
+          <FilterChip label={`User: ${user}`} />
+        </View>
 
-          {selectedRequest && (
-            <View style={styles.detailBox}>
-              <Text>Name: {selectedRequest.name}</Text>
-              <Text>Request Type: {selectedRequest.requestType}</Text>
-              <Text>Category: {selectedRequest.category}</Text>
-              <Text>Sub Category: {selectedRequest.subCategory}</Text>
-              <Text>Description: {selectedRequest.description}</Text>
-              <Text>Total: {selectedRequest.amount * selectedRequest.quantity + selectedRequest.transactionCost}</Text>
-              <View style={styles.btnRow}>
-                <TouchableOpacity
-                  style={[styles.actionBtn, { backgroundColor: "green" }]}
-                  onPress={() => handleAction(selectedRequest.index, "Approved")}
-                >
-                  <Text style={{ color: "#fff" }}>Approve</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.actionBtn, { backgroundColor: "red" }]}
-                  onPress={() => handleAction(selectedRequest.index, "Rejected")}
-                >
-                  <Text style={{ color: "#fff" }}>Reject</Text>
-                </TouchableOpacity>
-              </View>
+        {[1, 2, 3].map((_, i) => (
+          <View key={i} style={styles.card}>
+            <View style={styles.cardRow}>
+              <Text style={styles.cardLabel}>Receipt #</Text>
+              <Text style={styles.cardValue}>93</Text>
             </View>
-          )}
-          {message ? <Text style={{ textAlign: "center", color: "green" }}>{message}</Text> : null}
-        </ScrollView>
-      )}
+
+            <View style={styles.cardRow}>
+              <Text style={styles.cardLabel}>Date</Text>
+              <Text style={styles.cardValue}>25/09/2025</Text>
+            </View>
+
+            <View style={styles.cardRow}>
+              <Text style={styles.cardLabel}>Total</Text>
+              <Text style={styles.amount}>UGX 1,400,000</Text>
+            </View>
+
+            <View style={styles.cardRow}>
+              <Text style={styles.cardLabel}>Balance</Text>
+              <Text style={styles.balance}>UGX 0.00</Text>
+            </View>
+
+            <View style={styles.cardRow}>
+              <Text style={styles.cardLabel}>Category</Text>
+              <Text style={styles.cardValue}>Fuel</Text>
+            </View>
+
+            <View style={styles.cardRow}>
+              <Text style={styles.cardLabel}>Applicant</Text>
+              <Text style={styles.cardValue}>Michael Mutua</Text>
+            </View>
+
+            <TouchableOpacity style={styles.linkBtn}>
+              <Text style={styles.linkText}>View Receipt</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+
+        {/* ===== TRANSFERS ===== */}
+        <Text style={styles.sectionTitle}>Transfers</Text>
+
+        {[1, 2].map((_, i) => (
+          <View key={i} style={styles.card}>
+            <View style={styles.cardRow}>
+              <Text style={styles.cardLabel}>Transfer Ref</Text>
+              <Text style={styles.cardValue}>TRX-234</Text>
+            </View>
+
+            <View style={styles.cardRow}>
+              <Text style={styles.cardLabel}>Receipt Ref</Text>
+              <Text style={styles.cardValue}>93</Text>
+            </View>
+
+            <View style={styles.cardRow}>
+              <Text style={styles.cardLabel}>Amount</Text>
+              <Text style={styles.amount}>UGX 500,000</Text>
+            </View>
+
+            <View style={styles.cardRow}>
+              <Text style={styles.cardLabel}>Applicant</Text>
+              <Text style={styles.cardValue}>Michael Mutua</Text>
+            </View>
+          </View>
+        ))}
+
+        {/* ===== PENDING SIGNUPS ===== */}
+        <Text style={styles.sectionTitle}>Pending Signup Requests</Text>
+
+        {[1, 2].map((_, i) => (
+          <View key={i} style={styles.card}>
+            <Text style={styles.bold}>John Doe</Text>
+            <Text style={styles.muted}>john@email.com</Text>
+            <Text style={styles.muted}>Kenya • 25 Jan 2026</Text>
+
+            <View style={styles.actionsRow}>
+              <TouchableOpacity style={styles.approveBtn}>
+                <Text style={styles.btnText}>Approve</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.rejectBtn}>
+                <Text style={styles.btnText}>Reject</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
     </View>
   );
 }
 
+/* ===== FILTER CHIP ===== */
+function FilterChip({
+  label,
+  active,
+  onPress,
+}: {
+  label: string;
+  active?: boolean;
+  onPress?: () => void;
+}) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={[styles.chip, active && { backgroundColor: "#8B0000" }]}
+    >
+      <Text style={[styles.chipText, active && { color: "#fff" }]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+/* ===== STYLES ===== */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f4f4f4" },
-  header: {
-    backgroundColor: "#003366",
-    padding: 15,
+  container: { flex: 1, backgroundColor: "#f2f2f2" },
+  scroll: { padding: 15 },
+
+  topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-  },
-  headerText: { color: "#fff", fontSize: 20, fontWeight: "bold" },
-  adminButton: {
-    padding: 8,
-    backgroundColor: "#4CAF50",
-    borderRadius: 20,
-  },
-  loginBox: {
+    padding: 15,
     backgroundColor: "#fff",
-    margin: 20,
-    padding: 20,
-    borderRadius: 10,
-    elevation: 3,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    padding: 10,
-    marginVertical: 8,
+
+  title: { fontSize: 16, fontWeight: "bold" },
+
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginVertical: 10,
   },
-  button: {
-    backgroundColor: "#4CAF50",
-    padding: 12,
-    borderRadius: 5,
-    marginTop: 10,
+
+  filtersRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 10,
   },
-  buttonText: { color: "#fff", textAlign: "center", fontWeight: "bold" },
-  title: { fontSize: 18, fontWeight: "bold", textAlign: "center", marginVertical: 10 },
-  dashboard: { padding: 15 },
+
+  chip: {
+    backgroundColor: "#fff",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+
+  chipText: { fontSize: 12 },
+
   card: {
     backgroundColor: "#fff",
     padding: 15,
-    marginVertical: 8,
     borderRadius: 10,
-    elevation: 2,
+    marginBottom: 12,
   },
-  name: { fontWeight: "bold", color: "#007bff", fontSize: 16 },
-  clearBtn: {
-    backgroundColor: "red",
-    padding: 10,
+
+  cardRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+
+  cardLabel: { color: "#666", fontSize: 12 },
+  cardValue: { fontSize: 13 },
+  amount: { color: "#8B0000", fontWeight: "bold" },
+  balance: { color: "green", fontWeight: "bold" },
+
+  linkBtn: { marginTop: 10 },
+  linkText: { color: "#0B3F73", fontWeight: "bold" },
+
+  bold: { fontWeight: "bold" },
+  muted: { color: "#666", fontSize: 12 },
+
+  actionsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 10,
-    borderRadius: 5,
   },
-  detailBox: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 10,
-    marginVertical: 15,
+
+  approveBtn: {
+    backgroundColor: "#0B3F73",
+    padding: 10,
+    borderRadius: 8,
+    width: "48%",
+    alignItems: "center",
   },
-  btnRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
-  actionBtn: { flex: 1, padding: 10, marginHorizontal: 5, borderRadius: 5 },
+
+  rejectBtn: {
+    backgroundColor: "#8B0000",
+    padding: 10,
+    borderRadius: 8,
+    width: "48%",
+    alignItems: "center",
+  },
+
+  btnText: { color: "#fff", fontWeight: "bold" },
 });

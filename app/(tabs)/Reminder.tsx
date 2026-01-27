@@ -1,15 +1,15 @@
 // screens/AddAppointment.tsx
-import React, { useState } from "react";
+import emailjs from "@emailjs/browser";
+import { Picker } from "@react-native-picker/picker";
+import { useState } from "react";
 import {
-  View,
+  Alert,
+  StyleSheet,
   Text,
   TextInput,
-  StyleSheet,
   TouchableOpacity,
-  Alert,
+  View,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
-import emailjs from "@emailjs/browser";
 
 export default function AddAppointment() {
   const [name, setName] = useState("");
@@ -32,7 +32,7 @@ export default function AddAppointment() {
           reminder,
           to_email: "kelvinekiganga999@gmail.com",
         },
-        "YOUR_PUBLIC_KEY" // replace with your EmailJS Public Key
+        "YOUR_PUBLIC_KEY", // replace with your EmailJS Public Key
       );
 
       Alert.alert("✅ Success", "Appointment successfully sent!");

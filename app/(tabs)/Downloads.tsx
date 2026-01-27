@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type Receipt = {
   reference: string;
@@ -40,83 +41,90 @@ export default function Downloads() {
   const [duration, setDuration] = useState("ANNUALLY");
 
   return (
-    <View style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Stack.Screen options={{ headerShown: false }} />
 
-      {/* HEADER WITH BACK ARROW */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="#8B0000" />
-        </TouchableOpacity>
+        {/* HEADER */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backBtn}
+          >
+            <Ionicons name="arrow-back" size={22} color="#8B0000" />
+          </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Downloadable Receipts</Text>
-
-        {/* Spacer for center alignment */}
-        <View style={{ width: 22 }} />
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {/* FILTER */}
-        <View style={styles.filterCard}>
-          <Text style={styles.filterLabel}>Select Receipt Duration</Text>
-          <View style={styles.pickerWrapper}>
-            <Picker
-              selectedValue={duration}
-              onValueChange={(value) => setDuration(value)}
-            >
-              <Picker.Item label="Annually" value="ANNUALLY" />
-              <Picker.Item label="Three-Quarter" value="THREE-QUARTER" />
-              <Picker.Item label="Half-Yearly" value="HALF-YEARLY" />
-              <Picker.Item label="Quarterly" value="QUARTERLY" />
-              <Picker.Item label="1 Month" value="1-MONTH" />
-            </Picker>
-          </View>
+          <Text style={styles.headerTitle}>Downloadable Receipts</Text>
         </View>
 
-        {/* RECEIPTS */}
-        {RECEIPTS.map((item, index) => (
-          <View key={index} style={styles.receiptCard}>
-            <View style={styles.receiptRow}>
-              <Text style={styles.label}>Reference</Text>
-              <Text style={styles.value}>{item.reference}</Text>
-            </View>
+        <ScrollView contentContainerStyle={styles.scroll}>
+          {/* FILTER */}
+          <View style={styles.filterCard}>
+            <Text style={styles.filterLabel}>Select Receipt Duration</Text>
 
-            <View style={styles.receiptRow}>
-              <Text style={styles.label}>Date</Text>
-              <Text style={styles.value}>{item.date}</Text>
+            <View style={styles.pickerWrapper}>
+              <Picker
+                selectedValue={duration}
+                onValueChange={(value) => setDuration(value)}
+              >
+                <Picker.Item label="Annually" value="ANNUALLY" />
+                <Picker.Item label="Three-Quarter" value="THREE-QUARTER" />
+                <Picker.Item label="Half-Yearly" value="HALF-YEARLY" />
+                <Picker.Item label="Quarterly" value="QUARTERLY" />
+                <Picker.Item label="1 Month" value="1-MONTH" />
+              </Picker>
             </View>
-
-            <View style={styles.receiptRow}>
-              <Text style={styles.label}>Total Amount</Text>
-              <Text style={styles.amount}>{item.amount}</Text>
-            </View>
-
-            <View style={styles.receiptRow}>
-              <Text style={styles.label}>Balance</Text>
-              <Text style={styles.balance}>{item.balance}</Text>
-            </View>
-
-            <View style={styles.receiptRow}>
-              <Text style={styles.label}>Applicant</Text>
-              <Text style={styles.value}>{item.applicant}</Text>
-            </View>
-
-            <TouchableOpacity style={styles.viewBtn}>
-              <MaterialIcons name="receipt" size={18} color="#fff" />
-              <Text style={styles.viewBtnText}>View Receipt</Text>
-            </TouchableOpacity>
           </View>
-        ))}
-      </ScrollView>
-    </View>
+
+          {/* RECEIPTS */}
+          {RECEIPTS.map((item, index) => (
+            <View key={index} style={styles.receiptCard}>
+              <View style={styles.receiptRow}>
+                <Text style={styles.label}>Reference</Text>
+                <Text style={styles.value}>{item.reference}</Text>
+              </View>
+
+              <View style={styles.receiptRow}>
+                <Text style={styles.label}>Date</Text>
+                <Text style={styles.value}>{item.date}</Text>
+              </View>
+
+              <View style={styles.receiptRow}>
+                <Text style={styles.label}>Total Amount</Text>
+                <Text style={styles.amount}>{item.amount}</Text>
+              </View>
+
+              <View style={styles.receiptRow}>
+                <Text style={styles.label}>Balance</Text>
+                <Text style={styles.balance}>{item.balance}</Text>
+              </View>
+
+              <View style={styles.receiptRow}>
+                <Text style={styles.label}>Applicant</Text>
+                <Text style={styles.value}>{item.applicant}</Text>
+              </View>
+
+              <TouchableOpacity style={styles.viewBtn}>
+                <MaterialIcons name="receipt" size={18} color="#fff" />
+                <Text style={styles.viewBtnText}>View Receipt</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
 
 /* ---------- STYLES ---------- */
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: "#f2f2f2",
+  },
+
+  container: {
+    flex: 1,
   },
 
   scroll: {
@@ -125,10 +133,15 @@ const styles = StyleSheet.create({
 
   header: {
     backgroundColor: "#fff",
-    padding: 15,
+    paddingTop: 38, // ≈ 1 cm from top
+    paddingHorizontal: 15,
+    paddingBottom: 15,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+  },
+
+  backBtn: {
+    marginRight: 8, // brings arrow close to title
   },
 
   headerTitle: {

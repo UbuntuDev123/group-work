@@ -2,7 +2,6 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,8 +9,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-const currencies = ["USD", "KES", "EUR", "GBP", "NGN", "ZAR", "JPY", "CAD"];
 
 export default function Home() {
   const router = useRouter();
@@ -30,7 +27,6 @@ export default function Home() {
   const [to, setTo] = useState("KES");
   const [amount, setAmount] = useState("");
   const [rate, setRate] = useState<number | null>(null);
-  const [pickerType, setPickerType] = useState<"from" | "to" | null>(null);
 
   useEffect(() => {
     fetch(`https://api.exchangerate.host/latest?base=${from}&symbols=${to}`)
@@ -39,6 +35,11 @@ export default function Home() {
       .catch(() => setRate(null));
   }, [from, to]);
 
+  const swapCurrencies = () => {
+    setFrom(to);
+    setTo(from);
+  };
+
   const convertedAmount =
     rate && amount ? (parseFloat(amount) * rate).toFixed(2) : "-";
 
@@ -46,7 +47,6 @@ export default function Home() {
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* 1 CM TOP SPACE */}
       <View style={{ height: 38 }} />
 
       {/* TOP BAR */}
@@ -58,10 +58,7 @@ export default function Home() {
         <Ionicons name="notifications-outline" size={22} color="#0B3F73" />
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scroll}>
         {/* GREETING */}
         <Text style={styles.greeting}>
           {getGreeting()}, <Text style={{ fontWeight: "bold" }}>Kelvine</Text>
@@ -78,6 +75,7 @@ export default function Home() {
             <TouchableOpacity
               key={i}
               style={styles.actionItem}
+              activeOpacity={0.7}
               onPress={() => router.push(item.route as any)}
             >
               <View style={styles.actionIcon}>
@@ -94,47 +92,95 @@ export default function Home() {
 
         {/* BALANCE */}
         <View style={styles.balanceCard}>
-          <Text style={styles.showBalance}>Required Action</Text>
+          <View style={styles.balanceRow}>
+            <Text style={styles.showBalance}>Required Action</Text>
+            <Ionicons name="eye-outline" size={18} color="#8B0000" />
+          </View>
+        </View>
+
+        {/* ADMIN / TRANSFER / REMINDER */}
+        <View style={styles.actionsRow}>
+          {[
+            { label: "Admin", icon: "admin-panel-settings", tab: "/Admin" },
+            { label: "Transfer", icon: "swap-horiz", tab: "/Transfer" },
+            {
+              label: "Reminder",
+              icon: "notifications-active",
+              tab: "/Reminder",
+            },
+          ].map((item, i) => (
+            <TouchableOpacity
+              key={i}
+              style={styles.actionItem}
+              activeOpacity={0.7}
+              onPress={() => router.push(item.tab as any)}
+            >
+              <View style={styles.redCircle}>
+                <MaterialIcons name={item.icon as any} size={22} color="#fff" />
+              </View>
+              <Text style={styles.actionText}>{item.label}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
         {/* ACCOUNTS */}
-        <Text style={styles.sectionTitle}>My Accounts</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>My accounts</Text>
+        </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {[
-            { title: "Expenditure", amount: "23,450.90 KES" },
-            { title: "Receipts", amount: "1,090.12 KES" },
-            { title: "Balance", amount: "22,360.78 KES" },
+            {
+              title: "Expenditure",
+              amount: "23,450.90 KES",
+              sub: "Total amount approved",
+            },
+            {
+              title: "Receipts",
+              amount: "1,090.12 KES",
+              sub: "Total amount reconciled",
+            },
+            {
+              title: "Balance",
+              amount: "22,360.78 KES",
+              sub: "Total remaining amount",
+              negative: true,
+            },
           ].map((acc, i) => (
             <View key={i} style={styles.accountCard}>
               <Text style={styles.accountTitle}>{acc.title}</Text>
-              <Text style={styles.accountAmount}>{acc.amount}</Text>
+              <Text
+                style={
+                  acc.negative
+                    ? styles.accountAmountNegative
+                    : styles.accountAmount
+                }
+              >
+                {acc.amount}
+              </Text>
+              <Text style={styles.accountSub}>{acc.sub}</Text>
             </View>
           ))}
         </ScrollView>
 
-        {/* FOREX CALCULATOR */}
+        {/* FOREX */}
         <View style={styles.forexCard}>
           <Text style={styles.sectionTitle}>Forex Calculator</Text>
 
           <View style={styles.forexRow}>
-            <TouchableOpacity
-              style={styles.currencyBox}
-              onPress={() => setPickerType("from")}
-            >
+            <View style={styles.currencyBox}>
               <Text style={styles.currencyLabel}>From</Text>
               <Text style={styles.currencyValue}>{from}</Text>
+            </View>
+
+            <TouchableOpacity onPress={swapCurrencies}>
+              <Ionicons name="swap-horizontal" size={26} color="#0B3F73" />
             </TouchableOpacity>
 
-            <Ionicons name="swap-horizontal" size={26} color="#0B3F73" />
-
-            <TouchableOpacity
-              style={styles.currencyBox}
-              onPress={() => setPickerType("to")}
-            >
+            <View style={styles.currencyBox}>
               <Text style={styles.currencyLabel}>To</Text>
               <Text style={styles.currencyValue}>{to}</Text>
-            </TouchableOpacity>
+            </View>
           </View>
 
           <TextInput
@@ -145,62 +191,36 @@ export default function Home() {
             style={styles.amountInput}
           />
 
+          <View style={styles.rateBox}>
+            <Text style={{ color: "green" }}>
+              Buy Rate: {rate ? rate.toFixed(4) : "--"} {to}
+            </Text>
+            <Text style={{ color: "red" }}>
+              Sell Rate: {rate ? (rate * 0.99).toFixed(4) : "--"} {to}
+            </Text>
+          </View>
+
           <View style={styles.resultBox}>
             <Text style={styles.resultText}>
               Converted Amount: {convertedAmount}
             </Text>
           </View>
         </View>
-
-        {/* 1 CM FOOTER SPACE */}
-        <View style={{ height: 38 }} />
       </ScrollView>
-
-      {/* CURRENCY PICKER MODAL */}
-      <Modal visible={pickerType !== null} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            {currencies.map((cur) => (
-              <TouchableOpacity
-                key={cur}
-                style={styles.modalItem}
-                onPress={() => {
-                  pickerType === "from" ? setFrom(cur) : setTo(cur);
-                  setPickerType(null);
-                }}
-              >
-                <Text>{cur}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
 
 /* ---------- STYLES ---------- */
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#f2f2f2",
-  },
-
-  container: {
-    flex: 1,
-  },
-
-  scroll: {
-    padding: 15,
-  },
-
+  container: { flex: 1, backgroundColor: "#f2f2f2" },
+  scroll: { padding: 15 },
   topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
     padding: 15,
     backgroundColor: "#fff",
   },
-
   profileCircle: {
     width: 36,
     height: 36,
@@ -210,74 +230,74 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
-  showBalance: {
-    color: "#8B1D18",
-    fontSize: 14,
-    fontWeight: "500",
-  },
   profileText: { color: "#0B3F73", fontWeight: "bold" },
   homeText: { fontWeight: "bold" },
-
   greeting: { fontSize: 18, marginVertical: 10 },
-
   actionsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginVertical: 15,
   },
-  balanceRow: { flexDirection: "row", justifyContent: "space-between" },
-  showBalance: { color: "#8B0000", fontWeight: "bold" },
   actionItem: { alignItems: "center", width: 70 },
   actionIcon: {
     backgroundColor: "#fff",
     padding: 12,
     borderRadius: 30,
   },
-  actionText: { fontSize: 12, marginTop: 5 },
-
-  balanceCard: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 10,
-  },
-
-  sectionTitle: { fontWeight: "bold", marginVertical: 10 },
-
-  accountCard: {
+  actionText: { textAlign: "center", fontSize: 12, marginTop: 5 },
+  balanceCard: { backgroundColor: "#fff", padding: 15, borderRadius: 10 },
+  balanceRow: { flexDirection: "row", justifyContent: "space-between" },
+  showBalance: { color: "#8B0000", fontWeight: "bold" },
+  redCircle: {
     backgroundColor: "#0B3F73",
-    padding: 25,
+    padding: 14,
+    borderRadius: 30,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginVertical: 10,
+  },
+  sectionTitle: { fontWeight: "bold" },
+  accountCard: {
+    backgroundColor: "#8B0000",
+    padding: 35,
     borderRadius: 10,
     marginRight: 10,
-    width: 220,
+    width: 250,
   },
   accountTitle: { color: "#fff" },
-  accountAmount: { color: "#fff", fontWeight: "bold" },
-
+  accountAmount: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  accountAmountNegative: {
+    color: "#ffdede",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  accountSub: { color: "#f0dede", fontSize: 12 },
   forexCard: {
     backgroundColor: "#fff",
     padding: 15,
     borderRadius: 10,
     marginTop: 15,
   },
-
   forexRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-
   currencyBox: {
     borderWidth: 1,
     borderColor: "#ddd",
-    padding: 10,
     borderRadius: 8,
+    padding: 10,
     width: 120,
   },
-
   currencyLabel: { fontSize: 12, color: "#666" },
-  currencyValue: { fontWeight: "bold" },
-
+  currencyValue: { fontSize: 14, fontWeight: "bold" },
   amountInput: {
     borderWidth: 1,
     borderColor: "#ddd",
@@ -285,29 +305,24 @@ const styles = StyleSheet.create({
     padding: 12,
     marginTop: 10,
   },
-
+  rateBox: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    backgroundColor: "#f9f9f9",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 10,
+  },
   resultBox: {
     backgroundColor: "#0B3F73",
-    padding: 15,
+    padding: 18,
     borderRadius: 10,
-    marginTop: 10,
+    marginTop: 15,
     alignItems: "center",
   },
-
-  resultText: { color: "#fff", fontWeight: "bold" },
-
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    padding: 20,
-  },
-  modalItem: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderColor: "#eee",
+  resultText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });

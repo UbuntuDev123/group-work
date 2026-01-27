@@ -1,14 +1,19 @@
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { View } from "react-native";
 
+import Admin from "./Admin";
 import Apply from "./Apply";
 import Downloads from "./Downloads";
 import Home from "./Home";
 import Receipts from "./Receipts";
+import Reminder from "./Reminder";
 import TrackScreen from "./Track";
+import Transfer from "./Transfer";
 
 const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
 /* ---------- CUSTOM HEADER ---------- */
 function CustomHeader() {
@@ -24,8 +29,8 @@ function CustomHeader() {
   );
 }
 
-/* ---------- TABS LAYOUT ---------- */
-export default function TabsLayout() {
+/* ---------- BOTTOM TABS ---------- */
+function BottomTabs() {
   return (
     <Tab.Navigator
       screenOptions={{
@@ -36,9 +41,7 @@ export default function TabsLayout() {
           backgroundColor: "#0A0F2C",
           borderTopWidth: 0,
         },
-        headerStyle: {
-          backgroundColor: "#0A0F2C",
-        },
+        headerStyle: { backgroundColor: "#0A0F2C" },
         headerTintColor: "#fff",
       }}
     >
@@ -61,6 +64,7 @@ export default function TabsLayout() {
           ),
         }}
       />
+
       <Tab.Screen
         name="Home"
         component={Home}
@@ -92,5 +96,20 @@ export default function TabsLayout() {
         }}
       />
     </Tab.Navigator>
+  );
+}
+
+/* ---------- STACK NAVIGATOR ---------- */
+export default function TabsLayout() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {/* Bottom Tabs */}
+      <Stack.Screen name="Tabs" component={BottomTabs} />
+
+      {/* Hidden screens */}
+      <Stack.Screen name="Admin" component={Admin} />
+      <Stack.Screen name="Transfer" component={Transfer} />
+      <Stack.Screen name="Reminder" component={Reminder} />
+    </Stack.Navigator>
   );
 }

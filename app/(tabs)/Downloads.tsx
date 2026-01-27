@@ -1,6 +1,6 @@
-import { MaterialIcons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ScrollView,
@@ -36,15 +36,23 @@ const RECEIPTS: Receipt[] = [
 ];
 
 export default function Downloads() {
+  const router = useRouter();
   const [duration, setDuration] = useState("ANNUALLY");
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: "Downloads" }} />
+      <Stack.Screen options={{ headerShown: false }} />
 
-      {/* HEADER */}
+      {/* HEADER WITH BACK ARROW */}
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={22} color="#8B0000" />
+        </TouchableOpacity>
+
         <Text style={styles.headerTitle}>Downloadable Receipts</Text>
+
+        {/* Spacer for center alignment */}
+        <View style={{ width: 22 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -118,7 +126,9 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: "#fff",
     padding: 15,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
   },
 
   headerTitle: {

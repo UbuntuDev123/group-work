@@ -1,152 +1,229 @@
-// screens/AddAppointment.tsx
-import emailjs from "@emailjs/browser";
-import { Picker } from "@react-native-picker/picker";
-import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { Stack } from "expo-router";
 import {
-  Alert,
+  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 
-export default function AddAppointment() {
-  const [name, setName] = useState("");
-  const [time, setTime] = useState("");
-  const [reminder, setReminder] = useState("");
-
-  const handleSubmit = async () => {
-    if (!name || !time || !reminder) {
-      Alert.alert("⚠️ Missing Fields", "Please fill in all fields.");
-      return;
-    }
-
-    try {
-      await emailjs.send(
-        "YOUR_SERVICE_ID", // replace with your EmailJS Service ID
-        "YOUR_TEMPLATE_ID", // replace with your EmailJS Template ID
-        {
-          name,
-          time,
-          reminder,
-          to_email: "kelvinekiganga999@gmail.com",
-        },
-        "YOUR_PUBLIC_KEY", // replace with your EmailJS Public Key
-      );
-
-      Alert.alert("✅ Success", "Appointment successfully sent!");
-      setName("");
-      setTime("");
-      setReminder("");
-    } catch (error) {
-      console.error("EmailJS Error:", error);
-      Alert.alert("❌ Failed", "Could not send appointment.");
-    }
-  };
-
+export default function Task() {
   return (
     <View style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.heading}>➕ Add a New Appointment</Text>
+      <Stack.Screen options={{ headerShown: false }} />
 
-        <Text style={styles.label}>Name</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter task name"
-          value={name}
-          onChangeText={setName}
-        />
+      <ScrollView contentContainerStyle={styles.scroll}>
+        {/* HERO SECTION */}
+        <View style={styles.hero}>
+          <View>
+            <Text style={styles.heroTitle}>📅 Task Management Tool</Text>
+            <Text style={styles.heroSubtitle}>
+              Viewing all tasks from your country
+            </Text>
+          </View>
 
-        <Text style={styles.label}>Time</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="YYYY-MM-DD"
-          value={time}
-          onChangeText={setTime}
-        />
-
-        <Text style={styles.label}>Reminder</Text>
-        <View style={styles.pickerWrapper}>
-          <Picker
-            selectedValue={reminder}
-            onValueChange={(itemValue) => setReminder(itemValue)}
-          >
-            <Picker.Item label="Select Reminder" value="" />
-            <Picker.Item label="30 Minutes" value="30min" />
-            <Picker.Item label="1 Hour" value="1hr" />
-            <Picker.Item label="24 Hours" value="24hr" />
-            <Picker.Item label="3 Days" value="3days" />
-            <Picker.Item label="1 Week" value="1week" />
-            <Picker.Item label="1 Month" value="1month" />
-            <Picker.Item label="3 Months" value="3months" />
-            <Picker.Item label="6 Months" value="6months" />
-            <Picker.Item label="1 Year" value="1year" />
-            <Picker.Item label="3 Years" value="3years" />
-          </Picker>
+          <View style={styles.notificationBell}>
+            <Ionicons name="notifications-outline" size={24} color="#8B0000" />
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>3</Text>
+            </View>
+          </View>
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-          <Text style={styles.buttonText}>Add Task</Text>
-        </TouchableOpacity>
-      </View>
+        {/* FEATURE CARD */}
+        <View style={styles.card}>
+          <View>
+            <Text style={styles.cardTitle}>
+              Task <Text style={styles.rating}>100%</Text>
+            </Text>
+
+            <Text style={styles.listItem}>✔ Tracking Title</Text>
+            <Text style={styles.listItem}>✔ Description</Text>
+            <Text style={styles.listItem}>✔ Date & Time</Text>
+            <Text style={styles.listItem}>✔ Priority</Text>
+          </View>
+
+          <TouchableOpacity style={styles.addBtn}>
+            <Text style={styles.addBtnText}>Add Task +</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* TASK LIST */}
+        <Text style={styles.sectionTitle}>📌 All Tasks from Your Country</Text>
+
+        <View style={styles.taskList}>
+          <Text style={{ color: "#666" }}>Loading...</Text>
+        </View>
+
+        {/* SUMMARY */}
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryTitle}>📊 Task Completion Summary</Text>
+          <Text style={styles.summaryText}>
+            Completed: <Text style={{ fontWeight: "bold" }}>0</Text> of{" "}
+            <Text style={{ fontWeight: "bold" }}>0</Text>
+          </Text>
+
+          <View style={styles.progressBar}>
+            <View style={styles.progressInner} />
+          </View>
+        </View>
+
+        {/* FOOTER */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Record, Remember, and Do!</Text>
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
+/* ---------- STYLES ---------- */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f4f7fc",
-    padding: 20,
-    justifyContent: "center",
+    backgroundColor: "#f2f2f2",
+    paddingTop: 38, // ✅ 1 cm from top
   },
-  card: {
+
+  scroll: {
+    padding: 15,
+  },
+
+  hero: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     backgroundColor: "#fff",
-    padding: 25,
-    borderRadius: 12,
-    borderLeftWidth: 6,
-    borderLeftColor: "#3e64ff",
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 16,
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
   },
-  heading: {
-    fontSize: 20,
+
+  heroTitle: {
+    fontSize: 18,
     fontWeight: "bold",
-    color: "#3e64ff",
-    marginBottom: 20,
   },
-  label: {
-    marginTop: 10,
-    fontWeight: "600",
-    marginBottom: 6,
+
+  heroSubtitle: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 3,
   },
-  input: {
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    fontSize: 16,
-    backgroundColor: "#fefefe",
+
+  notificationBell: {
+    position: "relative",
   },
-  pickerWrapper: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  button: {
-    marginTop: 20,
-    backgroundColor: "#3e64ff",
-    padding: 14,
+
+  badge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "#8B0000",
+    width: 16,
+    height: 16,
     borderRadius: 8,
     alignItems: "center",
+    justifyContent: "center",
   },
-  buttonText: {
-    color: "white",
+
+  badgeText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "bold",
+  },
+
+  card: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
+
+  cardTitle: {
     fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 6,
+  },
+
+  rating: {
+    color: "green",
+    fontSize: 14,
+  },
+
+  listItem: {
+    fontSize: 13,
+    color: "#444",
+    marginVertical: 2,
+  },
+
+  addBtn: {
+    backgroundColor: "#8B0000",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 10,
+    alignItems: "center",
+  },
+
+  addBtnText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginVertical: 10,
+  },
+
+  taskList: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    marginBottom: 15,
+    alignItems: "center",
+  },
+
+  summaryCard: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
+
+  summaryTitle: {
+    fontSize: 15,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+
+  summaryText: {
+    fontSize: 13,
+    marginBottom: 8,
+  },
+
+  progressBar: {
+    height: 8,
+    backgroundColor: "#ddd",
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+
+  progressInner: {
+    width: "0%",
+    height: "100%",
+    backgroundColor: "#0B3F73",
+  },
+
+  footer: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+
+  footerText: {
+    fontSize: 14,
     fontWeight: "bold",
   },
 });

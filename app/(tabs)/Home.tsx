@@ -228,7 +228,11 @@ export default function Home() {
 /* ---------- STYLES ---------- */
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f2f2f2" },
-  scroll: { padding: 15 },
+
+  scroll: {
+    padding: 15,
+    marginTop: 38, // ≈ 1 cm space below top bar
+  },
 
   topBar: {
     flexDirection: "row",

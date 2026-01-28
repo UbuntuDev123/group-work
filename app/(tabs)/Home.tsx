@@ -23,8 +23,6 @@ export default function Home() {
   };
 
   /* ---------- FOREX STATE ---------- */
-  const currencies = ["USD", "KES", "EUR", "GBP", "NGN", "ZAR", "JPY", "CAD"];
-
   const [from, setFrom] = useState("USD");
   const [to, setTo] = useState("KES");
   const [amount, setAmount] = useState("");
@@ -49,15 +47,15 @@ export default function Home() {
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
+      <View style={{ height: 38 }} />
+
       {/* TOP BAR */}
       <View style={styles.topBar}>
         <View style={styles.profileCircle}>
           <Text style={styles.profileText}>KI</Text>
         </View>
-
         <Text style={styles.homeText}>Home</Text>
-
-        <Ionicons name="notifications-outline" size={22} color="#8B0000" />
+        <Ionicons name="notifications-outline" size={22} color="#0B3F73" />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -128,15 +126,6 @@ export default function Home() {
         {/* ACCOUNTS */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>My accounts</Text>
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Text style={styles.viewAll}>swipe</Text>
-            <Ionicons
-              name="arrow-forward"
-              size={16}
-              color="#8B0000"
-              style={{ marginLeft: 5 }}
-            />
-          </View>
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -174,12 +163,9 @@ export default function Home() {
           ))}
         </ScrollView>
 
-        {/* FOREX CALCULATOR */}
+        {/* FOREX */}
         <View style={styles.forexCard}>
           <Text style={styles.sectionTitle}>Forex Calculator</Text>
-          <Text style={styles.forexSubtitle}>
-            Real-time currency conversion rates
-          </Text>
 
           <View style={styles.forexRow}>
             <View style={styles.currencyBox}>
@@ -207,10 +193,10 @@ export default function Home() {
 
           <View style={styles.rateBox}>
             <Text style={{ color: "green" }}>
-              ↑ Buy Rate: {rate ? rate.toFixed(4) : "--"} {to}
+              Buy Rate: {rate ? rate.toFixed(4) : "--"} {to}
             </Text>
             <Text style={{ color: "red" }}>
-              ↓ Sell Rate: {rate ? (rate * 0.99).toFixed(4) : "--"} {to}
+              Sell Rate: {rate ? (rate * 0.99).toFixed(4) : "--"} {to}
             </Text>
           </View>
 
@@ -228,40 +214,30 @@ export default function Home() {
 /* ---------- STYLES ---------- */
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f2f2f2" },
-
-  scroll: {
-    padding: 15,
-    marginTop: 38, // ≈ 1 cm space below top bar
-  },
-
+  scroll: { padding: 15 },
   topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
     padding: 15,
     backgroundColor: "#fff",
   },
-
   profileCircle: {
     width: 36,
     height: 36,
     borderRadius: 18,
     borderWidth: 2,
-    borderColor: "#8B0000",
+    borderColor: "#0B3F73",
     alignItems: "center",
     justifyContent: "center",
   },
-  profileText: { color: "#8B0000", fontWeight: "bold" },
-  homeText: { fontSize: 16, fontWeight: "bold" },
-
+  profileText: { color: "#0B3F73", fontWeight: "bold" },
+  homeText: { fontWeight: "bold" },
   greeting: { fontSize: 18, marginVertical: 10 },
-
   actionsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginVertical: 15,
   },
-
   actionItem: { alignItems: "center", width: 70 },
   actionIcon: {
     backgroundColor: "#fff",
@@ -269,29 +245,20 @@ const styles = StyleSheet.create({
     borderRadius: 30,
   },
   actionText: { textAlign: "center", fontSize: 12, marginTop: 5 },
-
-  balanceCard: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 10,
-  },
+  balanceCard: { backgroundColor: "#fff", padding: 15, borderRadius: 10 },
   balanceRow: { flexDirection: "row", justifyContent: "space-between" },
   showBalance: { color: "#8B0000", fontWeight: "bold" },
-
   redCircle: {
     backgroundColor: "#0B3F73",
     padding: 14,
     borderRadius: 30,
   },
-
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginVertical: 10,
   },
   sectionTitle: { fontWeight: "bold" },
-  viewAll: { color: "#8B0000" },
-
   accountCard: {
     backgroundColor: "#8B0000",
     padding: 35,
@@ -300,30 +267,28 @@ const styles = StyleSheet.create({
     width: 250,
   },
   accountTitle: { color: "#fff" },
-  accountAmount: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  accountAmount: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
   accountAmountNegative: {
     color: "#ffdede",
     fontSize: 18,
     fontWeight: "bold",
   },
   accountSub: { color: "#f0dede", fontSize: 12 },
-
   forexCard: {
     backgroundColor: "#fff",
     padding: 15,
     borderRadius: 10,
     marginTop: 15,
   },
-  forexSubtitle: {
-    color: "#666",
-    marginBottom: 10,
-  },
   forexRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-
   currencyBox: {
     borderWidth: 1,
     borderColor: "#ddd",
@@ -333,7 +298,6 @@ const styles = StyleSheet.create({
   },
   currencyLabel: { fontSize: 12, color: "#666" },
   currencyValue: { fontSize: 14, fontWeight: "bold" },
-
   amountInput: {
     borderWidth: 1,
     borderColor: "#ddd",
@@ -341,7 +305,6 @@ const styles = StyleSheet.create({
     padding: 12,
     marginTop: 10,
   },
-
   rateBox: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -350,7 +313,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 10,
   },
-
   resultBox: {
     backgroundColor: "#0B3F73",
     padding: 18,

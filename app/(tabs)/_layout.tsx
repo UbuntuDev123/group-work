@@ -46,6 +46,16 @@ function BottomTabs() {
       }}
     >
       <Tab.Screen
+        name="Home"
+        component={Home}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Tab.Screen
         name="Apply"
         component={Apply}
         options={{
@@ -61,16 +71,6 @@ function BottomTabs() {
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="download-outline" size={size} color={color} />
-          ),
-        }}
-      />
-
-      <Tab.Screen
-        name="Home"
-        component={Home}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
           ),
         }}
       />
@@ -110,6 +110,10 @@ export default function TabsLayout() {
       <Stack.Screen name="Admin" component={Admin} />
       <Stack.Screen name="Transfer" component={Transfer} />
       <Stack.Screen name="Reminder" component={Reminder} />
+      <Stack.Screen name="Track" component={TrackScreen} />
+      <Stack.Screen name="Apply" component={Apply} />
+      <Stack.Screen name="Receipts" component={Receipts} />
+      <Stack.Screen name="Downloads" component={Downloads} />
     </Stack.Navigator>
   );
 }

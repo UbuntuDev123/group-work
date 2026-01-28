@@ -1,14 +1,16 @@
 {
   "expo": {
-    "name": "fh",
-    "slug": "fh",
+    "name": "Family Humanitarian Experience",
+    "slug": "Family Humanitarian Experience",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "fh260app",
+    "scheme": "Family Humanitarian Experience",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
 
     "splash": {
+      "image": "./assets/images/android-chrome-192x192.png",
+      "resizeMode": "contain",
       "backgroundColor": "#0B3F73"
     },
 
@@ -18,16 +20,10 @@
 
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/fhlogo.jpg",
+        "foregroundImage": "./assets/images/android-chrome-192x192.png",
         "backgroundColor": "#0B3F73"
       },
       "edgeToEdgeEnabled": true
-    },
-
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
     },
 
     "plugins": [
@@ -35,8 +31,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/fhlogo.jpg",
-          "imageWidth": 200,
+          "image": "./assets/images/android-chrome-192x192.png",
           "resizeMode": "contain",
           "backgroundColor": "#0B3F73"
         }

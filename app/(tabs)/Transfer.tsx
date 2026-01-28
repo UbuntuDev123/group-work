@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   },
 
   proceedBtn: {
-    backgroundColor: "#8B0000",
+    backgroundColor: "#0B3F73",
     padding: 15,
     borderRadius: 10,
     alignItems: "center",

@@ -53,7 +53,7 @@ export default function SignIn() {
   return (
     <View style={styles.container}>
       {/* Greeting */}
-      <Text style={styles.title}>Welcome to fh260</Text>
+      <Text style={styles.title}>Welcome</Text>
 
       {/* Password */}
       <View style={styles.field}>
@@ -83,7 +83,7 @@ export default function SignIn() {
 
       {/* Touch ID */}
       <TouchableOpacity style={styles.touchId} onPress={handleFingerprint}>
-        <Ionicons name="finger-print" size={22} color="#8B0000" />
+        <Ionicons name="finger-print" size={22} color="#0B3F73" />
         <Text style={styles.touchText}> Sign in with Touch ID</Text>
       </TouchableOpacity>
 
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     borderWidth: 3,
-    borderColor: "#8B0000",
+    borderColor: "#0B3F73",
     alignSelf: "center",
     alignItems: "center",
     justifyContent: "center",
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#8B0000",
+    color: "#0B3F73",
   },
   title: {
     fontSize: 20,
@@ -160,13 +160,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#8B0000",
+    borderColor: "#0B3F73",
     padding: 14,
     borderRadius: 30,
     marginBottom: 15,
   },
   touchText: {
-    color: "#8B0000",
+    color: "#0B3F73",
     fontSize: 16,
   },
   login: {
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loginActive: {
-    backgroundColor: "#8B0000",
+    backgroundColor: "#0B3F73",
   },
   loginText: {
     color: "#fff",

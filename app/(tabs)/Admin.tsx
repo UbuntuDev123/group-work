@@ -159,7 +159,7 @@ function FilterChip({
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={[styles.chip, active && { backgroundColor: "#8B0000" }]}
+      style={[styles.chip, active && { backgroundColor: "#0B733F" }]}
     >
       <Text style={[styles.chipText, active && { color: "#fff" }]}>
         {label}
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#8B0000",
+    backgroundColor: "#0B3F73",
     padding: 12,
     borderRadius: 8,
     marginTop: 10,

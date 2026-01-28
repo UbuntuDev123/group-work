@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   actionText: { textAlign: "center", fontSize: 12, marginTop: 5 },
   balanceCard: { backgroundColor: "#fff", padding: 15, borderRadius: 10 },
   balanceRow: { flexDirection: "row", justifyContent: "space-between" },
-  showBalance: { color: "#8B0000", fontWeight: "bold" },
+  showBalance: { color: "#fff", fontWeight: "bold" },
   redCircle: {
     backgroundColor: "#0B3F73",
     padding: 14,
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontWeight: "bold" },
   accountCard: {
-    backgroundColor: "#8B0000",
+    backgroundColor: "#0B3F73",
     padding: 35,
     borderRadius: 10,
     marginRight: 10,
@@ -273,11 +273,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   accountAmountNegative: {
-    color: "#ffdede",
+    color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
   },
-  accountSub: { color: "#f0dede", fontSize: 12 },
+  accountSub: { color: "#fff", fontSize: 12 },
   forexCard: {
     backgroundColor: "#fff",
     padding: 15,

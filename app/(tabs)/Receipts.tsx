@@ -3,11 +3,9 @@ import { Picker } from "@react-native-picker/picker";
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  Image,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -65,11 +63,6 @@ export default function ReceiptPortal() {
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll}>
-          <Text style={styles.description}>
-            These are the expenses on your name/your colleague's name that await
-            receipts. Please click on each to upload.
-          </Text>
-
           {/* USER SWITCH */}
           <View style={styles.filterCard}>
             <Text style={styles.filterLabel}>Clear Receipts For:</Text>
@@ -111,33 +104,6 @@ export default function ReceiptPortal() {
               <Text style={styles.status}>{transfer.status}</Text>
             </View>
           ))}
-
-          {/* PROFILE MODAL */}
-          <View style={styles.profileCard}>
-            <Text style={styles.sectionHeader}>Edit Profile</Text>
-            <View style={styles.profilePicture}>
-              <Image
-                source={{ uri: "https://via.placeholder.com/80" }}
-                style={styles.profileImage}
-              />
-              <TouchableOpacity style={styles.uploadBtn}>
-                <FontAwesome name="upload" size={16} color="#fff" />
-                <Text style={styles.uploadBtnText}>Upload</Text>
-              </TouchableOpacity>
-            </View>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Full Name"
-              editable={false}
-            />
-            <TextInput style={styles.input} placeholder="Role" />
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Tell us about yourself..."
-              multiline
-            />
-          </View>
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -187,7 +153,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#8B0000",
+    backgroundColor: "#0B3F73",
     padding: 10,
     borderRadius: 8,
     marginTop: 10,

@@ -1,168 +1,317 @@
-import { FontAwesome5 } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { Picker } from "@react-native-picker/picker";
+import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  FlatList,
+  ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 
-export default function DisbursedFunds() {
-  const [data] = useState<any[]>([]);
+type Fund = {
+  title: string;
+  category: string;
+  amount: string;
+  status: string;
+  date: string;
+  action: string;
+};
 
-  const renderItem = ({ item }: any) => (
-    <View style={styles.row}>
-      <Text style={styles.rowTitle}>{item.title}</Text>
-      <Text style={styles.rowSub}>KES {item.amount}</Text>
-      <Text style={styles.status}>{item.status}</Text>
-    </View>
-  );
+const FUNDS: Fund[] = [
+  {
+    title: "Office Supplies",
+    category: "Operations",
+    amount: "KES 48,000",
+    status: "Cleared",
+    date: "25 Nov 2025",
+    action: "None",
+  },
+  {
+    title: "Travel Reimbursement",
+    category: "Travel",
+    amount: "KES 30,000",
+    status: "Uploaded",
+    date: "12 Oct 2025",
+    action: "Verify Receipt",
+  },
+];
+
+export default function DisbursedFunds() {
+  const router = useRouter();
+
+  const [hideTotal, setHideTotal] = useState(false);
+  const [hideCompleted, setHideCompleted] = useState(false);
+  const [hideAverage, setHideAverage] = useState(false);
+  const [status, setStatus] = useState("all");
+  const [search, setSearch] = useState("");
 
   return (
     <View style={styles.container}>
+      <Stack.Screen options={{ headerShown: false }} />
+
       {/* HEADER */}
       <View style={styles.header}>
-        <Text style={styles.title}>
-          <FontAwesome5 name="chart-bar" size={18} /> Disbursed Funds
-        </Text>
-        <Text style={styles.subtitle}>
-          Track and manage all disbursed requests
-        </Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={22} color="#8B0000" />
+        </TouchableOpacity>
+
+        <Text style={styles.headerTitle}>Disbursed Funds</Text>
+
+        {/* Spacer */}
+        <View style={{ width: 22 }} />
       </View>
 
-      {/* STATS */}
-      <View style={styles.statsRow}>
-        <View style={styles.statCard}>
-          <FontAwesome5 name="dollar-sign" size={18} color="#0A0F2C" />
-          <Text style={styles.statValue}>KES 0</Text>
-          <Text style={styles.statLabel}>Total Disbursed</Text>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        {/* STATS */}
+        <View style={styles.statsRow}>
+          <StatCard
+            title="Total Disbursed"
+            value={hideTotal ? "****" : "KES 78,000"}
+            icon="payments"
+            onToggle={() => setHideTotal(!hideTotal)}
+          />
+          <StatCard
+            title="Completed"
+            value={hideCompleted ? "**" : "2 / 2"}
+            icon="check-circle"
+            onToggle={() => setHideCompleted(!hideCompleted)}
+          />
+          <StatCard
+            title="Average"
+            value={hideAverage ? "****" : "KES 39,000"}
+            icon="calculate"
+            onToggle={() => setHideAverage(!hideAverage)}
+          />
         </View>
 
-        <View style={styles.statCard}>
-          <FontAwesome5 name="check-circle" size={18} color="green" />
-          <Text style={styles.statValue}>0</Text>
-          <Text style={styles.statLabel}>Completed</Text>
+        {/* SEARCH & FILTER */}
+        <View style={styles.filterCard}>
+          <View style={styles.searchBox}>
+            <Ionicons name="search" size={16} color="#666" />
+            <TextInput
+              placeholder="Search requests..."
+              value={search}
+              onChangeText={setSearch}
+              style={styles.searchInput}
+            />
+          </View>
+
+          <View style={styles.pickerWrapper}>
+            <Picker selectedValue={status} onValueChange={setStatus}>
+              <Picker.Item label="All Status" value="all" />
+              <Picker.Item label="Pending" value="pending" />
+              <Picker.Item label="Uploaded" value="uploaded" />
+              <Picker.Item label="Cleared" value="cleared" />
+            </Picker>
+          </View>
         </View>
-      </View>
 
-      {/* LIST */}
-      <View style={styles.listHeader}>
-        <Text style={styles.listTitle}>Funding Requests</Text>
-      </View>
+        {/* FUNDS LIST */}
+        {FUNDS.map((item, index) => (
+          <View key={index} style={styles.card}>
+            <Text style={styles.cardTitle}>{item.title}</Text>
 
-      <FlatList
-        data={data}
-        keyExtractor={(_, i) => i.toString()}
-        renderItem={renderItem}
-        ListEmptyComponent={
-          <Text style={styles.empty}>No disbursed funds yet</Text>
-        }
-      />
+            <InfoRow label="Category" value={item.category} />
+            <InfoRow label="Amount" value={item.amount} highlight />
+            <InfoRow label="Status" value={item.status} />
+            <InfoRow label="Date" value={item.date} />
+            <InfoRow label="Action" value={item.action} />
 
-      {/* EXPORT */}
-      <TouchableOpacity style={styles.exportBtn}>
-        <FontAwesome5 name="file-export" size={14} color="#fff" />
-        <Text style={styles.exportText}> Export Report</Text>
-      </TouchableOpacity>
+            <TouchableOpacity style={styles.actionBtn}>
+              <MaterialIcons name="visibility" size={18} color="#fff" />
+              <Text style={styles.actionText}>View Details</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+      </ScrollView>
     </View>
   );
 }
+
+/* ---------- COMPONENTS ---------- */
+
+function StatCard({
+  title,
+  value,
+  icon,
+  onToggle,
+}: {
+  title: string;
+  value: string;
+  icon: any;
+  onToggle: () => void;
+}) {
+  return (
+    <View style={styles.statCard}>
+      <View style={styles.statHeader}>
+        <MaterialIcons name={icon} size={20} color="#8B0000" />
+        <TouchableOpacity onPress={onToggle}>
+          <Ionicons name="eye-outline" size={18} color="#8B0000" />
+        </TouchableOpacity>
+      </View>
+      <Text style={styles.statTitle}>{title}</Text>
+      <Text style={styles.statValue}>{value}</Text>
+    </View>
+  );
+}
+
+function InfoRow({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
+  return (
+    <View style={styles.infoRow}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={highlight ? styles.amount : styles.infoValue}>{value}</Text>
+    </View>
+  );
+}
+
+/* ---------- STYLES ---------- */
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#f2f2f2",
+  },
+
   container: {
     flex: 1,
-    backgroundColor: "#F4F6F9",
-    padding: 16,
+  },
+
+  scroll: {
+    padding: 15,
   },
 
   header: {
-    marginBottom: 20,
+    backgroundColor: "#fff",
+    paddingTop: 38, // ≈ 1 cm from top
+    paddingHorizontal: 15,
+    paddingBottom: 15,
+    flexDirection: "row",
+    alignItems: "center",
   },
 
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#0A0F2C",
+  backBtn: {
+    marginRight: 8, // brings arrow close to title
   },
 
-  subtitle: {
-    color: "#555",
-    marginTop: 4,
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
   },
 
   statsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 20,
+    marginBottom: 15,
   },
 
   statCard: {
-    width: "48%",
     backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 12,
-    elevation: 2,
+    padding: 12,
+    borderRadius: 10,
+    width: "32%",
+  },
+
+  statHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+
+  statTitle: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 5,
   },
 
   statValue: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginTop: 8,
+    fontSize: 14,
+    fontWeight: "bold",
+    marginTop: 4,
   },
 
-  statLabel: {
-    color: "#777",
+  filterCard: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
+
+  searchBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 10,
+  },
+
+  searchInput: {
+    flex: 1,
+    marginLeft: 6,
+  },
+
+  pickerWrapper: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+
+  card: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
+
+  cardTitle: {
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
+
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 4,
+  },
+
+  infoLabel: {
+    fontSize: 12,
+    color: "#666",
+  },
+
+  infoValue: {
     fontSize: 13,
   },
 
-  listHeader: {
-    marginBottom: 10,
+  amount: {
+    fontWeight: "bold",
+    color: "#0B3F73",
   },
 
-  listTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-
-  row: {
-    backgroundColor: "#fff",
-    padding: 14,
-    borderRadius: 10,
-    marginBottom: 10,
-  },
-
-  rowTitle: {
-    fontWeight: "600",
-  },
-
-  rowSub: {
-    color: "#444",
-    marginTop: 2,
-  },
-
-  status: {
-    marginTop: 4,
-    color: "green",
-    fontWeight: "600",
-  },
-
-  empty: {
-    textAlign: "center",
-    marginTop: 40,
-    color: "#777",
-  },
-
-  exportBtn: {
+  actionBtn: {
     flexDirection: "row",
     justifyContent: "center",
-    backgroundColor: "#0A0F2C",
-    padding: 14,
-    borderRadius: 10,
-    marginTop: 20,
+    alignItems: "center",
+    backgroundColor: "blue",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 10,
   },
 
-  exportText: {
+  actionText: {
     color: "#fff",
-    fontWeight: "600",
+    marginLeft: 6,
+    fontWeight: "bold",
   },
 });

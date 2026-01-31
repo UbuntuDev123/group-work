@@ -1,5 +1,6 @@
-import { Ionicons } from "@expo/vector-icons";
-import { Stack } from "expo-router";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { Stack, useRouter } from "expo-router";
+import { useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -7,223 +8,268 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function Task() {
+/* ---------- TYPES ---------- */
+type Reminder = {
+  title: string;
+  date: string;
+  time: string;
+  priority: "High" | "Medium" | "Low";
+  status: "Active" | "Completed";
+};
+
+/* ---------- SAMPLE DATA ---------- */
+const REMINDERS: Reminder[] = [
+  {
+    title: "Team Meeting",
+    date: "12/01/2026",
+    time: "10:00 AM",
+    priority: "High",
+    status: "Active",
+  },
+  {
+    title: "Submit Report",
+    date: "12/03/2026",
+    time: "4:00 PM",
+    priority: "Medium",
+    status: "Completed",
+  },
+];
+
+export default function Reminder() {
+  const router = useRouter();
+  const [filter, setFilter] = useState<"ALL" | "ACTIVE" | "COMPLETED">("ALL");
+
+  const filteredReminders =
+    filter === "ALL"
+      ? REMINDERS
+      : REMINDERS.filter((r) =>
+          filter === "ACTIVE" ? r.status === "Active" : r.status === "Completed",
+        );
+
   return (
-    <View style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Stack.Screen options={{ headerShown: false }} />
 
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {/* HERO SECTION */}
-        <View style={styles.hero}>
-          <View>
-            <Text style={styles.heroTitle}>📅 Task Management Tool</Text>
-            <Text style={styles.heroSubtitle}>
-              Viewing all tasks from your country
-            </Text>
-          </View>
+        {/* ---------- HEADER ---------- */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={22} color="#8B0000" />
+          </TouchableOpacity>
 
-          <View style={styles.notificationBell}>
-            <Ionicons name="notifications-outline" size={24} color="#8B0000" />
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>3</Text>
+          <Text style={styles.headerTitle}>Reminders</Text>
+        </View>
+
+        <ScrollView contentContainerStyle={styles.scroll}>
+          {/* ---------- FILTER ---------- */}
+          <View style={styles.filterCard}>
+            <Text style={styles.filterLabel}>Filter Reminders</Text>
+
+            <View style={styles.filterRow}>
+              {["ALL", "ACTIVE", "COMPLETED"].map((item) => (
+                <TouchableOpacity
+                  key={item}
+                  style={[
+                    styles.filterBtn,
+                    filter === item && styles.filterBtnActive,
+                  ]}
+                  onPress={() => setFilter(item as any)}
+                >
+                  <Text
+                    style={[
+                      styles.filterText,
+                      filter === item && styles.filterTextActive,
+                    ]}
+                  >
+                    {item}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
-        </View>
 
-        {/* FEATURE CARD */}
-        <View style={styles.card}>
-          <View>
-            <Text style={styles.cardTitle}>
-              Task <Text style={styles.rating}>100%</Text>
-            </Text>
+          {/* ---------- REMINDERS ---------- */}
+          {filteredReminders.map((item, index) => (
+            <View key={index} style={styles.reminderCard}>
+              <View style={styles.row}>
+                <Text style={styles.label}>Title</Text>
+                <Text style={styles.value}>{item.title}</Text>
+              </View>
 
-            <Text style={styles.listItem}>✔ Tracking Title</Text>
-            <Text style={styles.listItem}>✔ Description</Text>
-            <Text style={styles.listItem}>✔ Date & Time</Text>
-            <Text style={styles.listItem}>✔ Priority</Text>
-          </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>Date</Text>
+                <Text style={styles.value}>{item.date}</Text>
+              </View>
 
-          <TouchableOpacity style={styles.addBtn}>
-            <Text style={styles.addBtnText}>Add Task +</Text>
-          </TouchableOpacity>
-        </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>Time</Text>
+                <Text style={styles.value}>{item.time}</Text>
+              </View>
 
-        {/* TASK LIST */}
-        <Text style={styles.sectionTitle}>📌 All Tasks from Your Country</Text>
+              <View style={styles.row}>
+                <Text style={styles.label}>Priority</Text>
+                <Text
+                  style={[
+                    styles.priority,
+                    item.priority === "High"
+                      ? styles.high
+                      : item.priority === "Medium"
+                        ? styles.medium
+                        : styles.low,
+                  ]}
+                >
+                  {item.priority}
+                </Text>
+              </View>
 
-        <View style={styles.taskList}>
-          <Text style={{ color: "#666" }}>Loading...</Text>
-        </View>
-
-        {/* SUMMARY */}
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>📊 Task Completion Summary</Text>
-          <Text style={styles.summaryText}>
-            Completed: <Text style={{ fontWeight: "bold" }}>0</Text> of{" "}
-            <Text style={{ fontWeight: "bold" }}>0</Text>
-          </Text>
-
-          <View style={styles.progressBar}>
-            <View style={styles.progressInner} />
-          </View>
-        </View>
-
-        {/* FOOTER */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Record, Remember, and Do!</Text>
-        </View>
-      </ScrollView>
-    </View>
+              <TouchableOpacity style={styles.actionBtn}>
+                <MaterialIcons
+                  name={
+                    item.status === "Active"
+                      ? "notifications-active"
+                      : "check-circle"
+                  }
+                  size={18}
+                  color="#fff"
+                />
+                <Text style={styles.actionText}>
+                  {item.status === "Active"
+                    ? "Mark as Completed"
+                    : "Completed"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
 
 /* ---------- STYLES ---------- */
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: "#f2f2f2",
-    paddingTop: 38, // ✅ 1 cm from top
+  },
+
+  container: {
+    flex: 1,
   },
 
   scroll: {
     padding: 15,
   },
 
-  hero: {
+  /* HEADER */
+  header: {
+    backgroundColor: "#fff",
+    paddingTop: 38, // ≈ 1 cm
+    paddingHorizontal: 15,
+    paddingBottom: 15,
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+  },
+
+  backBtn: {
+    marginRight: 8,
+  },
+
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+
+  /* FILTER */
+  filterCard: {
     backgroundColor: "#fff",
     padding: 15,
     borderRadius: 10,
     marginBottom: 15,
   },
 
-  heroTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-
-  heroSubtitle: {
+  filterLabel: {
     fontSize: 12,
     color: "#666",
-    marginTop: 3,
-  },
-
-  notificationBell: {
-    position: "relative",
-  },
-
-  badge: {
-    position: "absolute",
-    top: -5,
-    right: -5,
-    backgroundColor: "#8B0000",
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  badgeText: {
-    color: "#fff",
-    fontSize: 10,
-    fontWeight: "bold",
-  },
-
-  card: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 15,
-  },
-
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 6,
-  },
-
-  rating: {
-    color: "green",
-    fontSize: 14,
-  },
-
-  listItem: {
-    fontSize: 13,
-    color: "#444",
-    marginVertical: 2,
-  },
-
-  addBtn: {
-    backgroundColor: "#8B0000",
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 10,
-    alignItems: "center",
-  },
-
-  addBtnText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginVertical: 10,
-  },
-
-  taskList: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 10,
-    marginBottom: 15,
-    alignItems: "center",
-  },
-
-  summaryCard: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 15,
-  },
-
-  summaryTitle: {
-    fontSize: 15,
-    fontWeight: "bold",
-    marginBottom: 5,
-  },
-
-  summaryText: {
-    fontSize: 13,
     marginBottom: 8,
   },
 
-  progressBar: {
-    height: 8,
-    backgroundColor: "#ddd",
-    borderRadius: 4,
-    overflow: "hidden",
+  filterRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
 
-  progressInner: {
-    width: "0%",
-    height: "100%",
+  filterBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+
+  filterBtnActive: {
     backgroundColor: "#0B3F73",
+    borderColor: "#0B3F73",
   },
 
-  footer: {
+  filterText: {
+    fontSize: 12,
+    color: "#333",
+  },
+
+  filterTextActive: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+
+  /* REMINDER CARD */
+  reminderCard: {
     backgroundColor: "#fff",
-    padding: 20,
+    padding: 15,
     borderRadius: 10,
-    alignItems: "center",
+    marginBottom: 15,
   },
 
-  footerText: {
-    fontSize: 14,
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+
+  label: {
+    fontSize: 12,
+    color: "#666",
+  },
+
+  value: {
+    fontSize: 13,
+    fontWeight: "500",
+  },
+
+  priority: {
+    fontSize: 13,
+    fontWeight: "bold",
+  },
+
+  high: { color: "#8B0000" },
+  medium: { color: "#E6A100" },
+  low: { color: "green" },
+
+  actionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#0B3F73",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+
+  actionText: {
+    color: "#fff",
+    marginLeft: 6,
     fontWeight: "bold",
   },
 });

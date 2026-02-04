@@ -10,7 +10,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
+/* ---------- TYPES ---------- */
 type Fund = {
   title: string;
   category: string;
@@ -20,6 +22,7 @@ type Fund = {
   action: string;
 };
 
+/* ---------- DATA ---------- */
 const FUNDS: Fund[] = [
   {
     title: "Office Supplies",
@@ -39,6 +42,7 @@ const FUNDS: Fund[] = [
   },
 ];
 
+/* ---------- SCREEN ---------- */
 export default function DisbursedFunds() {
   const router = useRouter();
 
@@ -49,85 +53,87 @@ export default function DisbursedFunds() {
   const [search, setSearch] = useState("");
 
   return (
-    <View style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Stack.Screen options={{ headerShown: false }} />
 
-      {/* HEADER */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#8B0000" />
-        </TouchableOpacity>
+        {/* HEADER */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backBtn}
+          >
+            <Ionicons name="arrow-back" size={22} color="#8B0000" />
+          </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Disbursed Funds</Text>
-
-        {/* Spacer */}
-        <View style={{ width: 22 }} />
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {/* STATS */}
-        <View style={styles.statsRow}>
-          <StatCard
-            title="Total Disbursed"
-            value={hideTotal ? "****" : "KES 78,000"}
-            icon="payments"
-            onToggle={() => setHideTotal(!hideTotal)}
-          />
-          <StatCard
-            title="Completed"
-            value={hideCompleted ? "**" : "2 / 2"}
-            icon="check-circle"
-            onToggle={() => setHideCompleted(!hideCompleted)}
-          />
-          <StatCard
-            title="Average"
-            value={hideAverage ? "****" : "KES 39,000"}
-            icon="calculate"
-            onToggle={() => setHideAverage(!hideAverage)}
-          />
+          <Text style={styles.headerTitle}>Disbursment</Text>
         </View>
 
-        {/* SEARCH & FILTER */}
-        <View style={styles.filterCard}>
-          <View style={styles.searchBox}>
-            <Ionicons name="search" size={16} color="#666" />
-            <TextInput
-              placeholder="Search requests..."
-              value={search}
-              onChangeText={setSearch}
-              style={styles.searchInput}
+        <ScrollView contentContainerStyle={styles.scroll}>
+          {/* STATS */}
+          <View style={styles.statsRow}>
+            <StatCard
+              title="Total Disbursed"
+              value={hideTotal ? "****" : "KES 78,000"}
+              icon="payments"
+              onToggle={() => setHideTotal(!hideTotal)}
+            />
+            <StatCard
+              title="Completed"
+              value={hideCompleted ? "**" : "2 / 2"}
+              icon="check-circle"
+              onToggle={() => setHideCompleted(!hideCompleted)}
+            />
+            <StatCard
+              title="Average"
+              value={hideAverage ? "****" : "KES 39,000"}
+              icon="calculate"
+              onToggle={() => setHideAverage(!hideAverage)}
             />
           </View>
 
-          <View style={styles.pickerWrapper}>
-            <Picker selectedValue={status} onValueChange={setStatus}>
-              <Picker.Item label="All Status" value="all" />
-              <Picker.Item label="Pending" value="pending" />
-              <Picker.Item label="Uploaded" value="uploaded" />
-              <Picker.Item label="Cleared" value="cleared" />
-            </Picker>
+          {/* SEARCH & FILTER */}
+          <View style={styles.filterCard}>
+            <View style={styles.searchBox}>
+              <Ionicons name="search" size={16} color="#666" />
+              <TextInput
+                placeholder="Search requests..."
+                value={search}
+                onChangeText={setSearch}
+                style={styles.searchInput}
+              />
+            </View>
+
+            <View style={styles.pickerWrapper}>
+              <Picker selectedValue={status} onValueChange={setStatus}>
+                <Picker.Item label="All Status" value="all" />
+                <Picker.Item label="Pending" value="pending" />
+                <Picker.Item label="Uploaded" value="uploaded" />
+                <Picker.Item label="Cleared" value="cleared" />
+              </Picker>
+            </View>
           </View>
-        </View>
 
-        {/* FUNDS LIST */}
-        {FUNDS.map((item, index) => (
-          <View key={index} style={styles.card}>
-            <Text style={styles.cardTitle}>{item.title}</Text>
+          {/* FUNDS LIST */}
+          {FUNDS.map((item, index) => (
+            <View key={index} style={styles.card}>
+              <Text style={styles.cardTitle}>{item.title}</Text>
 
-            <InfoRow label="Category" value={item.category} />
-            <InfoRow label="Amount" value={item.amount} highlight />
-            <InfoRow label="Status" value={item.status} />
-            <InfoRow label="Date" value={item.date} />
-            <InfoRow label="Action" value={item.action} />
+              <InfoRow label="Category" value={item.category} />
+              <InfoRow label="Amount" value={item.amount} highlight />
+              <InfoRow label="Status" value={item.status} />
+              <InfoRow label="Date" value={item.date} />
+              <InfoRow label="Action" value={item.action} />
 
-            <TouchableOpacity style={styles.actionBtn}>
-              <MaterialIcons name="visibility" size={18} color="#fff" />
-              <Text style={styles.actionText}>View Details</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
-      </ScrollView>
-    </View>
+              <TouchableOpacity style={styles.actionBtn}>
+                <MaterialIcons name="visibility" size={18} color="#fff" />
+                <Text style={styles.actionText}>View Details</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
 
@@ -192,7 +198,7 @@ const styles = StyleSheet.create({
 
   header: {
     backgroundColor: "#fff",
-    paddingTop: 38, // ≈ 1 cm from top
+    paddingTop: 38,
     paddingHorizontal: 15,
     paddingBottom: 15,
     flexDirection: "row",
@@ -200,7 +206,7 @@ const styles = StyleSheet.create({
   },
 
   backBtn: {
-    marginRight: 8, // brings arrow close to title
+    marginRight: 8,
   },
 
   headerTitle: {

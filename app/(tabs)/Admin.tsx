@@ -125,8 +125,8 @@ export default function Admin() {
 
           {[1, 2].map((_, i) => (
             <View key={i} style={styles.card}>
-              <Text style={styles.bold}>John Doe</Text>
-              <Text style={styles.muted}>john@email.com</Text>
+              <Text style={styles.bold}>Gorety</Text>
+              <Text style={styles.muted}>Gorety@email.com</Text>
               <Text style={styles.muted}>Kenya • 25 Jan 2026</Text>
 
               <View style={styles.actionsRow}>

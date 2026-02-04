@@ -1,9 +1,8 @@
-import { FontAwesome, Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,321 +12,381 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const REQUEST_TYPES = ["New", "Reimbursement"];
-const CATEGORIES = [
-  "Fuel",
-  "Borehole Supplies",
-  "Construction",
-  "Paper Works",
-  "Office",
-  "Permits",
-  "Internet/Electricity",
-  "Rent",
-  "Vehicle Repair",
-  "Expeditions",
-  "Transport",
-  "Meals",
-  "Accommodations",
-  "Projects",
-  "Training",
-  "Vehicle Service",
-  "Other",
-];
-const SUBCATEGORIES = ["None"]; // Can be dynamically added later
+/* ---------- TYPES ---------- */
+type RequestType = "New" | "Reimbursement";
 
-export default function FundRequest() {
+type Item = {
+  description: string;
+  amount: string;
+  quantity: string;
+};
+
+type SubCategoryBlock = {
+  name: string;
+  items: Item[];
+};
+
+export default function Apply() {
   const router = useRouter();
-  const [requestType, setRequestType] = useState(REQUEST_TYPES[0]);
+
+  const [requestType, setRequestType] = useState<RequestType>("New");
   const [category, setCategory] = useState("");
-  const [subCategory, setSubCategory] = useState("None");
-  const [otherSubCategory, setOtherSubCategory] = useState("");
-  const [moneyAtHand, setMoneyAtHand] = useState("0");
+  const [subCategory, setSubCategory] = useState("");
   const [transactionCost, setTransactionCost] = useState("");
-  const [totalRequest, setTotalRequest] = useState("");
-  const [profileVisible, setProfileVisible] = useState(false);
+  const [subCategories, setSubCategories] = useState<SubCategoryBlock[]>([]);
+
+  const categories = ["Office", "Transport", "Training"];
+  const subCategoryOptions = ["None", "Stationery", "Fuel", "Accommodation"];
+
+  /* ---------- CALCULATIONS ---------- */
+  const getSubCategoryTotal = (items: Item[]) =>
+    items.reduce((sum, i) => {
+      const a = parseFloat(i.amount) || 0;
+      const q = parseFloat(i.quantity) || 0;
+      return sum + a * q;
+    }, 0);
+
+  const totalAmount = subCategories.reduce(
+    (sum, sc) => sum + getSubCategoryTotal(sc.items),
+    0,
+  );
+
+  const totalRequest = totalAmount + (parseFloat(transactionCost) || 0);
+
+  /* ---------- HANDLERS ---------- */
+  const addSubCategory = () => {
+    if (!subCategory) return;
+    setSubCategories([
+      ...subCategories,
+      {
+        name: subCategory,
+        items: [{ description: "", amount: "", quantity: "" }],
+      },
+    ]);
+    setSubCategory("");
+  };
+
+  const updateItem = (
+    sc: number,
+    i: number,
+    field: keyof Item,
+    value: string,
+  ) => {
+    const copy = [...subCategories];
+    copy[sc].items[i][field] = value;
+    setSubCategories(copy);
+  };
+
+  const addItem = (sc: number) => {
+    const copy = [...subCategories];
+    copy[sc].items.push({ description: "", amount: "", quantity: "" });
+    setSubCategories(copy);
+  };
+
+  const removeItem = (sc: number, i: number) => {
+    const copy = [...subCategories];
+    copy[sc].items.splice(i, 1);
+    setSubCategories(copy);
+  };
+
+  const removeSubCategory = (index: number) => {
+    const copy = [...subCategories];
+    copy.splice(index, 1);
+    setSubCategories(copy);
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
-        <ScrollView contentContainerStyle={styles.scroll}>
-          <Text style={styles.header}>Fund Request</Text>
 
-          {/* Request Type */}
-          <Text style={styles.label}>Request Type:</Text>
-          <View style={styles.pickerWrapper}>
-            <Picker
-              selectedValue={requestType}
-              onValueChange={(value) => setRequestType(value)}
-            >
-              {REQUEST_TYPES.map((type, i) => (
-                <Picker.Item key={i} label={type} value={type} />
+        {/* HEADER – SAME CONCEPT AS DOWNLOADS */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backBtn}
+          >
+            <Ionicons name="arrow-back" size={22} color="#8B0000" />
+          </TouchableOpacity>
+
+          <Text style={styles.headerTitle}>Apply</Text>
+        </View>
+
+        <ScrollView contentContainerStyle={styles.scroll}>
+          {/* REQUEST TYPE */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Request Type</Text>
+            <View style={styles.row}>
+              {["New", "Reimbursement"].map((t) => (
+                <TouchableOpacity
+                  key={t}
+                  style={[
+                    styles.typeBtn,
+                    requestType === t && styles.activeType,
+                  ]}
+                  onPress={() => setRequestType(t as RequestType)}
+                >
+                  <Text
+                    style={[
+                      styles.typeText,
+                      requestType === t && { color: "#fff" },
+                    ]}
+                  >
+                    {t}
+                  </Text>
+                </TouchableOpacity>
               ))}
-            </Picker>
+            </View>
           </View>
 
-          {/* Reimbursement Buttons */}
-          {requestType === "Reimbursement" && (
-            <View style={styles.buttonGroup}>
-              <TouchableOpacity style={styles.actionBtn}>
-                <Text style={styles.actionBtnText}>Upload</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionBtn}>
-                <Text style={styles.actionBtnText}>Photo</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionBtn}>
-                <Text style={styles.actionBtnText}>Reconcile</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          {/* ATTACHMENTS */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Optional Document Attachments</Text>
+            <Text style={styles.note}>
+              Upload supporting documents (PDF, Word, Excel). Max 10MB per file.
+            </Text>
 
-          {/* Optional Document Upload */}
-          <View style={styles.uploadCard}>
-            <Text style={styles.uploadLabel}>
-              <FontAwesome name="paperclip" size={14} /> Optional Document
-              Attachments
-            </Text>
-            <Text style={styles.uploadDesc}>
-              Upload supporting documents (PDF, Word, Excel). Maximum 10MB per
-              file.
-            </Text>
             <TouchableOpacity style={styles.uploadBtn}>
-              <FontAwesome name="upload" size={16} color="#fff" />
-              <Text style={styles.uploadBtnText}>Choose Documents</Text>
+              <MaterialIcons name="upload-file" size={22} color="#fff" />
+              <Text style={styles.uploadText}>Choose Documents</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Category & Sub-category */}
-          <Text style={styles.label}>Category:</Text>
-          <View style={styles.pickerWrapper}>
+          {/* CATEGORY */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Category</Text>
             <Picker selectedValue={category} onValueChange={setCategory}>
               <Picker.Item label="Select category" value="" />
-              {CATEGORIES.map((cat, i) => (
-                <Picker.Item key={i} label={cat} value={cat} />
+              {categories.map((c) => (
+                <Picker.Item key={c} label={c} value={c} />
               ))}
             </Picker>
-          </View>
 
-          <Text style={styles.label}>Sub-category:</Text>
-          <View style={styles.pickerWrapper}>
+            <Text style={styles.cardTitle}>Sub-category</Text>
             <Picker selectedValue={subCategory} onValueChange={setSubCategory}>
-              {SUBCATEGORIES.map((sub, i) => (
-                <Picker.Item key={i} label={sub} value={sub} />
+              <Picker.Item label="Select sub-category" value="" />
+              {subCategoryOptions.map((s) => (
+                <Picker.Item key={s} label={s} value={s} />
               ))}
             </Picker>
+
+            <TouchableOpacity style={styles.addSubBtn} onPress={addSubCategory}>
+              <Text style={styles.addSubText}>Add sub-category</Text>
+            </TouchableOpacity>
           </View>
 
-          {subCategory === "Other" && (
+          {/* SUB-CATEGORIES */}
+          {subCategories.map((sc, scIndex) => (
+            <View key={scIndex} style={styles.card}>
+              <View style={styles.subHeader}>
+                <Text style={styles.subTitle}>{sc.name}</Text>
+                <TouchableOpacity onPress={() => removeSubCategory(scIndex)}>
+                  <Text style={styles.removeBtn}>Remove</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.tableHeader}>
+                <Text style={styles.th}>Description</Text>
+                <Text style={styles.th}>Amount</Text>
+                <Text style={styles.th}>Qty</Text>
+                <Text style={styles.th}>Action</Text>
+              </View>
+
+              {sc.items.map((item, i) => (
+                <View key={i} style={styles.tableRow}>
+                  <TextInput
+                    style={styles.td}
+                    placeholder="Description"
+                    value={item.description}
+                    onChangeText={(v) =>
+                      updateItem(scIndex, i, "description", v)
+                    }
+                  />
+                  <TextInput
+                    style={styles.td}
+                    placeholder="Amount"
+                    keyboardType="numeric"
+                    value={item.amount}
+                    onChangeText={(v) => updateItem(scIndex, i, "amount", v)}
+                  />
+                  <TextInput
+                    style={styles.td}
+                    placeholder="Qty"
+                    keyboardType="numeric"
+                    value={item.quantity}
+                    onChangeText={(v) => updateItem(scIndex, i, "quantity", v)}
+                  />
+                  <TouchableOpacity onPress={() => removeItem(scIndex, i)}>
+                    <Text style={styles.removeBtn}>Remove</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+
+              <TouchableOpacity onPress={() => addItem(scIndex)}>
+                <Text style={styles.addItem}>Add Item</Text>
+              </TouchableOpacity>
+
+              <Text style={styles.subTotal}>
+                Sub-category Total:{" "}
+                {getSubCategoryTotal(sc.items).toLocaleString()}
+              </Text>
+            </View>
+          ))}
+
+          {/* TRANSACTION COST */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Transaction Cost (Optional)</Text>
             <TextInput
               style={styles.input}
-              placeholder="Specify Other Sub-category"
-              value={otherSubCategory}
-              onChangeText={setOtherSubCategory}
+              keyboardType="numeric"
+              placeholder="Enter transaction cost"
+              value={transactionCost}
+              onChangeText={setTransactionCost}
             />
-          )}
+          </View>
 
-          {/* Money at Hand */}
-          <Text style={styles.label}>Money at Hand (Optional):</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            placeholder="No money at hand? Input 0"
-            value={moneyAtHand}
-            onChangeText={setMoneyAtHand}
-          />
-
-          {/* Transaction Cost */}
-          <Text style={styles.label}>Transaction Cost (Optional):</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            placeholder="Enter transaction cost"
-            value={transactionCost}
-            onChangeText={setTransactionCost}
-          />
-
-          {/* Total Request */}
-          <Text style={styles.label}>Total Request:</Text>
-          <TextInput
-            style={styles.input}
-            value={totalRequest}
-            editable={false}
-          />
-
-          {/* Proceed & Send Buttons */}
-          <TouchableOpacity style={styles.proceedBtn}>
-            <Text style={styles.proceedBtnText}>Proceed</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.proceedBtn}>
-            <Text style={styles.proceedBtnText}>Send and Download Receipt</Text>
-          </TouchableOpacity>
-
-          {/* Profile Modal */}
-          {profileVisible && (
-            <View style={styles.modal}>
-              <View style={styles.modalContent}>
-                <TouchableOpacity
-                  style={styles.closeBtn}
-                  onPress={() => setProfileVisible(false)}
-                >
-                  <Ionicons name="close" size={24} color="#333" />
-                </TouchableOpacity>
-                <Text style={styles.modalHeader}>Edit Profile</Text>
-
-                <View style={styles.profilePicture}>
-                  <Image
-                    source={{ uri: "https://via.placeholder.com/80" }}
-                    style={styles.profileImage}
-                  />
-                  <TouchableOpacity style={styles.uploadBtn}>
-                    <FontAwesome name="upload" size={16} color="#fff" />
-                    <Text style={styles.uploadBtnText}>Upload</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <TextInput
-                  style={styles.input}
-                  placeholder="Full Name"
-                  editable={false}
-                />
-                <TextInput style={styles.input} placeholder="Role" />
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Tell us about yourself..."
-                  multiline
-                />
-
-                <View style={styles.modalButtons}>
-                  <TouchableOpacity style={styles.saveBtn}>
-                    <Text style={{ color: "#fff" }}>Save Changes</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.cancelBtn}
-                    onPress={() => setProfileVisible(false)}
-                  >
-                    <Text style={{ color: "#000" }}>Cancel</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
+          {/* TOTALS */}
+          <View style={styles.card}>
+            <View style={styles.totalRow}>
+              <Text>Total Amount</Text>
+              <Text style={styles.bold}>{totalAmount.toLocaleString()}</Text>
             </View>
-          )}
+
+            <View style={styles.totalRow}>
+              <Text>Transaction Cost</Text>
+              <Text style={styles.bold}>
+                {(parseFloat(transactionCost) || 0).toLocaleString()}
+              </Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.totalRow}>
+              <Text style={styles.grand}>Total Request</Text>
+              <Text style={styles.grandAmount}>
+                {totalRequest.toLocaleString()}
+              </Text>
+            </View>
+          </View>
+
+          {/* PROCEED BUTTON – SAME COLOR AS REQUEST TAB */}
+          <TouchableOpacity style={styles.proceedBtn}>
+            <Text style={styles.proceedText}>Proceed</Text>
+          </TouchableOpacity>
         </ScrollView>
       </View>
     </SafeAreaView>
   );
 }
 
+/* ---------- STYLES ---------- */
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#f2f2f2" },
   container: { flex: 1 },
   scroll: { padding: 15 },
-  header: { fontSize: 18, fontWeight: "bold", marginBottom: 15 },
-  label: { fontSize: 13, color: "#333", marginTop: 10, marginBottom: 5 },
-  pickerWrapper: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  buttonGroup: {
+
+  header: {
+    backgroundColor: "#fff",
+    paddingTop: 38,
+    paddingHorizontal: 15,
+    paddingBottom: 15,
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 10,
-  },
-  actionBtn: {
-    backgroundColor: "#0d6efd",
-    padding: 10,
-    borderRadius: 5,
-    flex: 1,
-    marginHorizontal: 2,
     alignItems: "center",
   },
-  actionBtnText: { color: "#fff", fontWeight: "bold" },
-  uploadCard: {
-    backgroundColor: "#f8f9fa",
+  backBtn: { marginRight: 8 },
+  headerTitle: { fontSize: 16, fontWeight: "bold" },
+
+  card: {
+    backgroundColor: "#fff",
     padding: 15,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: "#dee2e6",
-    marginVertical: 10,
-  },
-  uploadLabel: { fontWeight: "bold", marginBottom: 5 },
-  uploadDesc: { fontSize: 12, color: "#6c757d", marginBottom: 10 },
-  uploadBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#0d6efd",
-    padding: 10,
-    borderRadius: 5,
-    justifyContent: "center",
-  },
-  uploadBtnText: { color: "#fff", marginLeft: 5, fontWeight: "bold" },
-  input: {
-    backgroundColor: "#fff",
-    borderRadius: 5,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    marginBottom: 10,
-  },
-  textArea: { height: 80, textAlignVertical: "top" },
-  proceedBtn: {
-    backgroundColor: "#0d6efd",
-    padding: 12,
-    borderRadius: 5,
-    alignItems: "center",
-    marginVertical: 5,
-  },
-  proceedBtnText: { color: "#fff", fontWeight: "bold" },
-  modal: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    width: "90%",
-    backgroundColor: "#fff",
     borderRadius: 10,
-    padding: 20,
-  },
-  closeBtn: { position: "absolute", top: 10, right: 10 },
-  modalHeader: {
-    fontSize: 16,
-    fontWeight: "bold",
     marginBottom: 15,
-    textAlign: "center",
   },
-  profilePicture: {
-    flexDirection: "row",
+
+  cardTitle: { fontWeight: "bold", marginBottom: 8 },
+  row: { flexDirection: "row", gap: 10 },
+  typeBtn: {
+    flex: 1,
+    padding: 12,
+    borderWidth: 1,
+    borderRadius: 8,
     alignItems: "center",
-    marginBottom: 10,
   },
-  profileImage: { width: 80, height: 80, borderRadius: 40, marginRight: 10 },
-  modalButtons: {
+  activeType: { backgroundColor: "#8B0000", borderColor: "#8B0000" },
+  typeText: { fontWeight: "600" },
+
+  uploadBtn: {
+    backgroundColor: "#0B3F73",
+    padding: 14,
+    borderRadius: 8,
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
+    gap: 10,
+  },
+  uploadText: { color: "#fff", fontWeight: "bold" },
+  note: { color: "#666", marginBottom: 10 },
+
+  addSubBtn: {
+    backgroundColor: "#FFC107",
+    padding: 12,
+    borderRadius: 8,
     marginTop: 10,
   },
-  saveBtn: {
-    backgroundColor: "#0d6efd",
-    padding: 10,
-    borderRadius: 5,
-    flex: 1,
-    alignItems: "center",
-    marginRight: 5,
+  addSubText: { textAlign: "center", fontWeight: "bold" },
+
+  subHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
   },
-  cancelBtn: {
-    backgroundColor: "#ccc",
-    padding: 10,
-    borderRadius: 5,
-    flex: 1,
-    alignItems: "center",
-    marginLeft: 5,
+  subTitle: { fontWeight: "bold" },
+  removeBtn: { color: "red", fontWeight: "bold" },
+
+  tableHeader: { flexDirection: "row" },
+  th: { flex: 1, fontWeight: "bold" },
+  tableRow: { flexDirection: "row", gap: 6, marginVertical: 6 },
+  td: { flex: 1, borderWidth: 1, borderRadius: 6, padding: 6 },
+
+  addItem: {
+    textAlign: "center",
+    marginTop: 10,
+    color: "#0B3F73",
+    fontWeight: "bold",
+  },
+
+  subTotal: {
+    marginTop: 8,
+    textAlign: "right",
+    fontWeight: "bold",
+    color: "#0B3F73",
+  },
+
+  input: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+  },
+
+  totalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginVertical: 5,
+  },
+  bold: { fontWeight: "bold" },
+  divider: { height: 1, backgroundColor: "#ddd", marginVertical: 10 },
+  grand: { fontWeight: "bold", fontSize: 16 },
+  grandAmount: { fontWeight: "bold", fontSize: 18, color: "green" },
+
+  proceedBtn: {
+    backgroundColor: "#0B3F73", // SAME AS REQUEST TAB
+    padding: 16,
+    borderRadius: 10,
+    marginBottom: 30,
+  },
+  proceedText: {
+    color: "#fff",
+    textAlign: "center",
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });

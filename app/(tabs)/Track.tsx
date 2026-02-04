@@ -80,7 +80,7 @@ export default function DisbursedFunds() {
             />
             <StatCard
               title="Completed"
-              value={hideCompleted ? "**" : "2 / 2"}
+              value={hideCompleted ? "**" : "4 / 2"}
               icon="check-circle"
               onToggle={() => setHideCompleted(!hideCompleted)}
             />

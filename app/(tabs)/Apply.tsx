@@ -1,8 +1,12 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Picker } from "@react-native-picker/picker";
+import * as DocumentPicker from "expo-document-picker";
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,6 +15,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+/* ---------- CONFIG ---------- */
+const BASE_URL = "https://fhserver.org.fh260.org";
 
 /* ---------- TYPES ---------- */
 type RequestType = "New" | "Reimbursement";
@@ -34,9 +41,27 @@ export default function Apply() {
   const [subCategory, setSubCategory] = useState("");
   const [transactionCost, setTransactionCost] = useState("");
   const [subCategories, setSubCategories] = useState<SubCategoryBlock[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const categories = ["Office", "Transport", "Training"];
-  const subCategoryOptions = ["None", "Stationery", "Fuel", "Accommodation"];
+  const subCategoryOptions = ["Stationery", "Fuel", "Accommodation"];
+
+  /* ---------- DOCUMENT PICKER ---------- */
+  const pickDocuments = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        multiple: true,
+        type: "*/*",
+      });
+
+      if (!result.canceled) {
+        setDocuments([...documents, ...result.assets]);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to pick document");
+    }
+  };
 
   /* ---------- CALCULATIONS ---------- */
   const getSubCategoryTotal = (items: Item[]) =>
@@ -56,6 +81,7 @@ export default function Apply() {
   /* ---------- HANDLERS ---------- */
   const addSubCategory = () => {
     if (!subCategory) return;
+
     setSubCategories([
       ...subCategories,
       {
@@ -63,6 +89,7 @@ export default function Apply() {
         items: [{ description: "", amount: "", quantity: "" }],
       },
     ]);
+
     setSubCategory("");
   };
 
@@ -95,20 +122,86 @@ export default function Apply() {
     setSubCategories(copy);
   };
 
+  /* ---------- SUBMIT REQUEST ---------- */
+  const submitRequest = async () => {
+    if (!category || subCategories.length === 0) {
+      Alert.alert("Error", "Please complete the form");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const token = await AsyncStorage.getItem("token");
+
+      if (!token) {
+        Alert.alert("Session expired", "Please login again.");
+        return;
+      }
+
+      const multipartFormData = new FormData();
+
+      const requestData = {
+        requestType,
+        category,
+        subCategories,
+        moneyAtHand: 0,
+        transactionCost: parseFloat(transactionCost) || 0,
+        attachments: [],
+      };
+
+      multipartFormData.append("requestData", JSON.stringify(requestData));
+
+      documents.forEach((doc, index) => {
+        multipartFormData.append(`document_${index}`, {
+          uri: doc.uri,
+          name: doc.name,
+          type: doc.mimeType || "application/octet-stream",
+        } as any);
+      });
+
+      const response = await fetch(`${BASE_URL}/api/requests`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: multipartFormData,
+      });
+
+      const text = await response.text();
+      console.log("SERVER RESPONSE:", text);
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error("Server returned invalid response");
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || "Request failed");
+      }
+
+      Alert.alert("Success", "Request submitted successfully");
+      router.back();
+    } catch (error: any) {
+      Alert.alert("Submission Failed", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ---------- UI ---------- */
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
 
-        {/* HEADER – SAME CONCEPT AS DOWNLOADS */}
+        {/* HEADER */}
         <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backBtn}
-          >
+          <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={22} color="#8B0000" />
           </TouchableOpacity>
-
           <Text style={styles.headerTitle}>Apply</Text>
         </View>
 
@@ -127,10 +220,10 @@ export default function Apply() {
                   onPress={() => setRequestType(t as RequestType)}
                 >
                   <Text
-                    style={[
-                      styles.typeText,
-                      requestType === t && { color: "#fff" },
-                    ]}
+                    style={{
+                      color: requestType === t ? "#fff" : "#000",
+                      fontWeight: "600",
+                    }}
                   >
                     {t}
                   </Text>
@@ -141,15 +234,18 @@ export default function Apply() {
 
           {/* ATTACHMENTS */}
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Optional Document Attachments</Text>
-            <Text style={styles.note}>
-              Upload supporting documents (PDF, Word, Excel). Max 10MB per file.
-            </Text>
+            <Text style={styles.cardTitle}>Attachments</Text>
 
-            <TouchableOpacity style={styles.uploadBtn}>
+            <TouchableOpacity style={styles.uploadBtn} onPress={pickDocuments}>
               <MaterialIcons name="upload-file" size={22} color="#fff" />
               <Text style={styles.uploadText}>Choose Documents</Text>
             </TouchableOpacity>
+
+            {documents.map((d, i) => (
+              <Text key={i} style={{ marginTop: 5 }}>
+                {d.name}
+              </Text>
+            ))}
           </View>
 
           {/* CATEGORY */}
@@ -178,19 +274,7 @@ export default function Apply() {
           {/* SUB-CATEGORIES */}
           {subCategories.map((sc, scIndex) => (
             <View key={scIndex} style={styles.card}>
-              <View style={styles.subHeader}>
-                <Text style={styles.subTitle}>{sc.name}</Text>
-                <TouchableOpacity onPress={() => removeSubCategory(scIndex)}>
-                  <Text style={styles.removeBtn}>Remove</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.tableHeader}>
-                <Text style={styles.th}>Description</Text>
-                <Text style={styles.th}>Amount</Text>
-                <Text style={styles.th}>Qty</Text>
-                <Text style={styles.th}>Action</Text>
-              </View>
+              <Text style={{ fontWeight: "bold" }}>{sc.name}</Text>
 
               {sc.items.map((item, i) => (
                 <View key={i} style={styles.tableRow}>
@@ -217,61 +301,46 @@ export default function Apply() {
                     onChangeText={(v) => updateItem(scIndex, i, "quantity", v)}
                   />
                   <TouchableOpacity onPress={() => removeItem(scIndex, i)}>
-                    <Text style={styles.removeBtn}>Remove</Text>
+                    <Text style={{ color: "red" }}>Remove</Text>
                   </TouchableOpacity>
                 </View>
               ))}
 
               <TouchableOpacity onPress={() => addItem(scIndex)}>
-                <Text style={styles.addItem}>Add Item</Text>
+                <Text style={{ color: "#0B3F73", fontWeight: "bold" }}>
+                  Add Item
+                </Text>
               </TouchableOpacity>
-
-              <Text style={styles.subTotal}>
-                Sub-category Total:{" "}
-                {getSubCategoryTotal(sc.items).toLocaleString()}
-              </Text>
             </View>
           ))}
 
           {/* TRANSACTION COST */}
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Transaction Cost (Optional)</Text>
+            <Text style={styles.cardTitle}>Transaction Cost</Text>
             <TextInput
               style={styles.input}
               keyboardType="numeric"
-              placeholder="Enter transaction cost"
               value={transactionCost}
               onChangeText={setTransactionCost}
             />
           </View>
 
-          {/* TOTALS */}
+          {/* TOTAL */}
           <View style={styles.card}>
-            <View style={styles.totalRow}>
-              <Text>Total Amount</Text>
-              <Text style={styles.bold}>{totalAmount.toLocaleString()}</Text>
-            </View>
-
-            <View style={styles.totalRow}>
-              <Text>Transaction Cost</Text>
-              <Text style={styles.bold}>
-                {(parseFloat(transactionCost) || 0).toLocaleString()}
-              </Text>
-            </View>
-
-            <View style={styles.divider} />
-
-            <View style={styles.totalRow}>
-              <Text style={styles.grand}>Total Request</Text>
-              <Text style={styles.grandAmount}>
-                {totalRequest.toLocaleString()}
-              </Text>
-            </View>
+            <Text>Total Request: {totalRequest.toLocaleString()}</Text>
           </View>
 
-          {/* PROCEED BUTTON – SAME COLOR AS REQUEST TAB */}
-          <TouchableOpacity style={styles.proceedBtn}>
-            <Text style={styles.proceedText}>Proceed</Text>
+          {/* SUBMIT */}
+          <TouchableOpacity
+            style={styles.proceedBtn}
+            onPress={submitRequest}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.proceedText}>Submit Request</Text>
+            )}
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -287,13 +356,12 @@ const styles = StyleSheet.create({
 
   header: {
     backgroundColor: "#fff",
-    paddingTop: 38,
-    paddingHorizontal: 15,
-    paddingBottom: 15,
+    padding: 15,
     flexDirection: "row",
     alignItems: "center",
+    gap: 10,
   },
-  backBtn: { marginRight: 8 },
+
   headerTitle: { fontSize: 16, fontWeight: "bold" },
 
   card: {
@@ -304,7 +372,9 @@ const styles = StyleSheet.create({
   },
 
   cardTitle: { fontWeight: "bold", marginBottom: 8 },
+
   row: { flexDirection: "row", gap: 10 },
+
   typeBtn: {
     flex: 1,
     padding: 12,
@@ -312,8 +382,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
   },
+
   activeType: { backgroundColor: "#8B0000", borderColor: "#8B0000" },
-  typeText: { fontWeight: "600" },
 
   uploadBtn: {
     backgroundColor: "#0B3F73",
@@ -323,8 +393,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 10,
   },
+
   uploadText: { color: "#fff", fontWeight: "bold" },
-  note: { color: "#666", marginBottom: 10 },
 
   addSubBtn: {
     backgroundColor: "#FFC107",
@@ -332,57 +402,22 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 10,
   },
+
   addSubText: { textAlign: "center", fontWeight: "bold" },
 
-  subHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  subTitle: { fontWeight: "bold" },
-  removeBtn: { color: "red", fontWeight: "bold" },
-
-  tableHeader: { flexDirection: "row" },
-  th: { flex: 1, fontWeight: "bold" },
   tableRow: { flexDirection: "row", gap: 6, marginVertical: 6 },
+
   td: { flex: 1, borderWidth: 1, borderRadius: 6, padding: 6 },
 
-  addItem: {
-    textAlign: "center",
-    marginTop: 10,
-    color: "#0B3F73",
-    fontWeight: "bold",
-  },
-
-  subTotal: {
-    marginTop: 8,
-    textAlign: "right",
-    fontWeight: "bold",
-    color: "#0B3F73",
-  },
-
-  input: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-  },
-
-  totalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 5,
-  },
-  bold: { fontWeight: "bold" },
-  divider: { height: 1, backgroundColor: "#ddd", marginVertical: 10 },
-  grand: { fontWeight: "bold", fontSize: 16 },
-  grandAmount: { fontWeight: "bold", fontSize: 18, color: "green" },
+  input: { borderWidth: 1, borderRadius: 8, padding: 12 },
 
   proceedBtn: {
-    backgroundColor: "#0B3F73", // SAME AS REQUEST TAB
+    backgroundColor: "#0B3F73",
     padding: 16,
     borderRadius: 10,
     marginBottom: 30,
   },
+
   proceedText: {
     color: "#fff",
     textAlign: "center",

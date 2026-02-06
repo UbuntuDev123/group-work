@@ -1,7 +1,9 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack, useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,16 +14,74 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Admin() {
   const router = useRouter();
+
+  const [allowed, setAllowed] = useState(false);
+  const [loading, setLoading] = useState(true);
+
   const [receiptType, setReceiptType] = useState("Uploaded");
   const [country, setCountry] = useState("All");
   const [user, setUser] = useState("All");
+
+  /* ========= SAFE AUTHORIZATION CHECK ========= */
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = await AsyncStorage.getItem("token");
+        const userStr = await AsyncStorage.getItem("user");
+
+        if (!token || !userStr) {
+          Alert.alert("Access denied", "Please login first.");
+          router.replace("/");
+          return;
+        }
+
+        let parsedUser: any;
+
+        try {
+          parsedUser = JSON.parse(userStr);
+        } catch {
+          Alert.alert("Session error", "Please login again.");
+          router.replace("/");
+          return;
+        }
+
+        // Handles all backend variations safely
+        const userCountry =
+          parsedUser.country ||
+          parsedUser.user?.country ||
+          parsedUser.profile?.country ||
+          "";
+
+        if (String(userCountry).toUpperCase() !== "USA") {
+          Alert.alert(
+            "Not authorized",
+            "You are not allowed to view this page.",
+          );
+          router.replace("/home");
+          return;
+        }
+
+        setAllowed(true);
+      } catch (err) {
+        console.log("Auth failed:", err);
+        Alert.alert("Error", "Authentication failed.");
+        router.replace("/");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  if (loading || !allowed) return null;
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
 
-        {/* HEADER (same as Downloads) */}
+        {/* ===== HEADER ===== */}
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => router.back()}
@@ -29,7 +89,6 @@ export default function Admin() {
           >
             <Ionicons name="arrow-back" size={22} color="#8B0000" />
           </TouchableOpacity>
-
           <Text style={styles.headerTitle}>Admin Dashboard</Text>
         </View>
 
@@ -55,37 +114,13 @@ export default function Admin() {
 
           {[1, 2, 3].map((_, i) => (
             <View key={i} style={styles.card}>
-              <View style={styles.cardRow}>
-                <Text style={styles.cardLabel}>Receipt #</Text>
-                <Text style={styles.cardValue}>93</Text>
-              </View>
+              <Row label="Receipt #" value="93" />
+              <Row label="Date" value="25/09/2025" />
+              <Row label="Total" value="UGX 1,400,000" amount />
+              <Row label="Balance" value="UGX 0.00" balance />
+              <Row label="Category" value="Fuel" />
+              <Row label="Applicant" value="Michael Mutua" />
 
-              <View style={styles.cardRow}>
-                <Text style={styles.cardLabel}>Date</Text>
-                <Text style={styles.cardValue}>25/09/2025</Text>
-              </View>
-
-              <View style={styles.cardRow}>
-                <Text style={styles.cardLabel}>Total</Text>
-                <Text style={styles.amount}>UGX 1,400,000</Text>
-              </View>
-
-              <View style={styles.cardRow}>
-                <Text style={styles.cardLabel}>Balance</Text>
-                <Text style={styles.balance}>UGX 0.00</Text>
-              </View>
-
-              <View style={styles.cardRow}>
-                <Text style={styles.cardLabel}>Category</Text>
-                <Text style={styles.cardValue}>Fuel</Text>
-              </View>
-
-              <View style={styles.cardRow}>
-                <Text style={styles.cardLabel}>Applicant</Text>
-                <Text style={styles.cardValue}>Michael Mutua</Text>
-              </View>
-
-              {/* VIEW RECEIPT BUTTON (same style as Downloads) */}
               <TouchableOpacity style={styles.viewBtn}>
                 <MaterialIcons name="receipt" size={18} color="#fff" />
                 <Text style={styles.viewBtnText}>View Receipt</Text>
@@ -98,25 +133,10 @@ export default function Admin() {
 
           {[1, 2].map((_, i) => (
             <View key={i} style={styles.card}>
-              <View style={styles.cardRow}>
-                <Text style={styles.cardLabel}>Transfer Ref</Text>
-                <Text style={styles.cardValue}>TRX-234</Text>
-              </View>
-
-              <View style={styles.cardRow}>
-                <Text style={styles.cardLabel}>Receipt Ref</Text>
-                <Text style={styles.cardValue}>93</Text>
-              </View>
-
-              <View style={styles.cardRow}>
-                <Text style={styles.cardLabel}>Amount</Text>
-                <Text style={styles.amount}>UGX 500,000</Text>
-              </View>
-
-              <View style={styles.cardRow}>
-                <Text style={styles.cardLabel}>Applicant</Text>
-                <Text style={styles.cardValue}>Michael Mutua</Text>
-              </View>
+              <Row label="Transfer Ref" value="TRX-234" />
+              <Row label="Receipt Ref" value="93" />
+              <Row label="Amount" value="UGX 500,000" amount />
+              <Row label="Applicant" value="Michael Mutua" />
             </View>
           ))}
 
@@ -126,7 +146,7 @@ export default function Admin() {
           {[1, 2].map((_, i) => (
             <View key={i} style={styles.card}>
               <Text style={styles.bold}>Gorety</Text>
-              <Text style={styles.muted}>Gorety@email.com</Text>
+              <Text style={styles.muted}>gorety@email.com</Text>
               <Text style={styles.muted}>Kenya • 25 Jan 2026</Text>
 
               <View style={styles.actionsRow}>
@@ -146,16 +166,8 @@ export default function Admin() {
   );
 }
 
-/* ===== FILTER CHIP ===== */
-function FilterChip({
-  label,
-  active,
-  onPress,
-}: {
-  label: string;
-  active?: boolean;
-  onPress?: () => void;
-}) {
+/* ===== SMALL COMPONENTS ===== */
+function FilterChip({ label, active, onPress }: any) {
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -168,20 +180,32 @@ function FilterChip({
   );
 }
 
+function Row({ label, value, amount, balance }: any) {
+  return (
+    <View style={styles.cardRow}>
+      <Text style={styles.cardLabel}>{label}</Text>
+      <Text
+        style={[
+          styles.cardValue,
+          amount && styles.amount,
+          balance && styles.balance,
+        ]}
+      >
+        {value}
+      </Text>
+    </View>
+  );
+}
+
 /* ===== STYLES ===== */
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#f2f2f2",
-  },
-
+  safeArea: { flex: 1, backgroundColor: "#f2f2f2" },
   container: { flex: 1 },
-
   scroll: { padding: 15 },
 
   header: {
     backgroundColor: "#fff",
-    paddingTop: 38, // ≈ 1 cm from top
+    paddingTop: 38,
     paddingHorizontal: 15,
     paddingBottom: 15,
     flexDirection: "row",
@@ -189,20 +213,11 @@ const styles = StyleSheet.create({
   },
 
   backBtn: { marginRight: 8 },
-
   headerTitle: { fontSize: 16, fontWeight: "bold" },
 
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginVertical: 10,
-  },
+  sectionTitle: { fontSize: 16, fontWeight: "bold", marginVertical: 10 },
 
-  filtersRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginBottom: 10,
-  },
+  filtersRow: { flexDirection: "row", flexWrap: "wrap", marginBottom: 10 },
 
   chip: {
     backgroundColor: "#fff",
@@ -244,11 +259,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
-  viewBtnText: {
-    color: "#fff",
-    marginLeft: 6,
-    fontWeight: "bold",
-  },
+  viewBtnText: { color: "#fff", marginLeft: 6, fontWeight: "bold" },
 
   bold: { fontWeight: "bold" },
   muted: { color: "#666", fontSize: 12 },

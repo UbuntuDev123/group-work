@@ -1,8 +1,12 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Picker } from "@react-native-picker/picker";
+import * as Linking from "expo-linking";
 import { Stack, useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,141 +15,138 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type Receipt = {
-  reference: string;
-  date: string;
-  amount: string;
-  balance: string;
-  applicant: string;
-};
-
-const RECEIPTS: Receipt[] = [
-  {
-    reference: "125",
-    date: "11/25/2025",
-    amount: "KES 48,000.00",
-    balance: "KES 0.00",
-    applicant: "Kelvine",
-  },
-  {
-    reference: "126",
-    date: "10/12/2025",
-    amount: "KES 30,000.00",
-    balance: "KES 0.00",
-    applicant: "Kelvine",
-  },
-];
+/* ===== BACKEND ===== */
+const BASE_URL = "https://fhserver.org.fh260.org";
 
 export default function Downloads() {
   const router = useRouter();
+
   const [duration, setDuration] = useState("ANNUALLY");
+  const [receipts, setReceipts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const loadReceipts = async (d = duration) => {
+    try {
+      setLoading(true);
+
+      const token = await AsyncStorage.getItem("token");
+
+      if (!token) {
+        Alert.alert("Login expired");
+        router.replace("/");
+        return;
+      }
+
+      const res = await fetch(`${BASE_URL}/api/user/receipts?duration=${d}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const text = await res.text(); // DEBUG
+
+      console.log("SERVER RESPONSE:", text);
+
+      const data = JSON.parse(text);
+
+      setReceipts(data.receipts || []);
+    } catch (err) {
+      console.log(err);
+      Alert.alert("Failed loading downloads");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadReceipts();
+  }, []);
+
+  useEffect(() => {
+    loadReceipts(duration);
+  }, [duration]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.center}>
+        <ActivityIndicator size="large" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <Stack.Screen options={{ headerShown: false }} />
+      <Stack.Screen options={{ headerShown: false }} />
 
-        {/* HEADER */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backBtn}
+      {/* HEADER */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={22} color="#0B3F73" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Downloadable Receipts</Text>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scroll}>
+        {/* FILTER */}
+        <View style={styles.filterCard}>
+          <Text>Select Receipt Duration</Text>
+
+          <Picker
+            selectedValue={duration}
+            onValueChange={(v) => setDuration(v)}
           >
-            <Ionicons name="arrow-back" size={22} color="#8B0000" />
-          </TouchableOpacity>
-
-          <Text style={styles.headerTitle}>Downloadable Receipts</Text>
+            <Picker.Item label="Annually" value="ANNUALLY" />
+            <Picker.Item label="Three-Quarter" value="THREE-QUARTER" />
+            <Picker.Item label="Half-Yearly" value="HALF-YEARLY" />
+            <Picker.Item label="Quarterly" value="QUARTERLY" />
+            <Picker.Item label="1 Month" value="1-MONTH" />
+          </Picker>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scroll}>
-          {/* FILTER */}
-          <View style={styles.filterCard}>
-            <Text style={styles.filterLabel}>Select Receipt Duration</Text>
+        {receipts.length === 0 && (
+          <Text style={{ textAlign: "center", marginTop: 30 }}>
+            No receipts found
+          </Text>
+        )}
 
-            <View style={styles.pickerWrapper}>
-              <Picker
-                selectedValue={duration}
-                onValueChange={(value) => setDuration(value)}
-              >
-                <Picker.Item label="Annually" value="ANNUALLY" />
-                <Picker.Item label="Three-Quarter" value="THREE-QUARTER" />
-                <Picker.Item label="Half-Yearly" value="HALF-YEARLY" />
-                <Picker.Item label="Quarterly" value="QUARTERLY" />
-                <Picker.Item label="1 Month" value="1-MONTH" />
-              </Picker>
-            </View>
+        {receipts.map((r, i) => (
+          <View key={i} style={styles.card}>
+            <Text>Reference: {r.reference}</Text>
+            <Text>Date: {r.submission_time}</Text>
+            <Text>Total: {r.total_amount}</Text>
+            <Text>Balance: {r.balance_amount}</Text>
+            <Text>Applicant: {r.name}</Text>
+
+            <TouchableOpacity
+              style={styles.btn}
+              onPress={() => Linking.openURL(r.drive_link)}
+            >
+              <MaterialIcons name="receipt" size={18} color="#fff" />
+              <Text style={{ color: "#fff", marginLeft: 6 }}>
+                Download Receipt
+              </Text>
+            </TouchableOpacity>
           </View>
-
-          {/* RECEIPTS */}
-          {RECEIPTS.map((item, index) => (
-            <View key={index} style={styles.receiptCard}>
-              <View style={styles.receiptRow}>
-                <Text style={styles.label}>Reference</Text>
-                <Text style={styles.value}>{item.reference}</Text>
-              </View>
-
-              <View style={styles.receiptRow}>
-                <Text style={styles.label}>Date</Text>
-                <Text style={styles.value}>{item.date}</Text>
-              </View>
-
-              <View style={styles.receiptRow}>
-                <Text style={styles.label}>Total Amount</Text>
-                <Text style={styles.amount}>{item.amount}</Text>
-              </View>
-
-              <View style={styles.receiptRow}>
-                <Text style={styles.label}>Balance</Text>
-                <Text style={styles.balance}>{item.balance}</Text>
-              </View>
-
-              <View style={styles.receiptRow}>
-                <Text style={styles.label}>Applicant</Text>
-                <Text style={styles.value}>{item.applicant}</Text>
-              </View>
-
-              <TouchableOpacity style={styles.viewBtn}>
-                <MaterialIcons name="receipt" size={18} color="#fff" />
-                <Text style={styles.viewBtnText}>View Receipt</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-        </ScrollView>
-      </View>
+        ))}
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
-/* ---------- STYLES ---------- */
+/* ===== STYLES ===== */
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#f2f2f2",
-  },
-
-  container: {
-    flex: 1,
-  },
-
-  scroll: {
-    padding: 15,
-  },
+  safeArea: { flex: 1, backgroundColor: "#f2f2f2" },
+  scroll: { padding: 15 },
 
   header: {
     backgroundColor: "#fff",
-    paddingTop: 38, // ≈ 1 cm from top
-    paddingHorizontal: 15,
-    paddingBottom: 15,
+    padding: 15,
     flexDirection: "row",
     alignItems: "center",
   },
 
-  backBtn: {
-    marginRight: 8, // brings arrow close to title
-  },
-
   headerTitle: {
-    fontSize: 16,
+    marginLeft: 10,
     fontWeight: "bold",
   },
 
@@ -156,67 +157,25 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
 
-  filterLabel: {
-    fontSize: 12,
-    color: "#666",
-    marginBottom: 5,
-  },
-
-  pickerWrapper: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-
-  receiptCard: {
+  card: {
     backgroundColor: "#fff",
     padding: 15,
     borderRadius: 10,
     marginBottom: 15,
   },
 
-  receiptRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 6,
-  },
-
-  label: {
-    fontSize: 12,
-    color: "#666",
-  },
-
-  value: {
-    fontSize: 13,
-    fontWeight: "500",
-  },
-
-  amount: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#0B3F73",
-  },
-
-  balance: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "green",
-  },
-
-  viewBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+  btn: {
+    marginTop: 10,
     backgroundColor: "#0B3F73",
     padding: 12,
     borderRadius: 8,
-    marginTop: 10,
+    flexDirection: "row",
+    justifyContent: "center",
   },
 
-  viewBtnText: {
-    color: "#fff",
-    marginLeft: 6,
-    fontWeight: "bold",
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

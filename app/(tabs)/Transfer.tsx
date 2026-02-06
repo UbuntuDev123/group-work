@@ -1,10 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Picker } from "@react-native-picker/picker";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,13 +17,13 @@ import {
 
 const API_BASE_URL = "https://fhserver.org.fh260.org/api";
 
+type TransferType = "self" | "colleague";
+
 export default function Transfer() {
   /* -------------------- STATE -------------------- */
   const [loading, setLoading] = useState(false);
+  const [transferType, setTransferType] = useState<TransferType>("self");
 
-  const [transferType, setTransferType] = useState<"self" | "colleague">(
-    "self",
-  );
   const [colleagues, setColleagues] = useState<any[]>([]);
   const [selectedColleague, setSelectedColleague] = useState<any>(null);
 
@@ -40,9 +42,8 @@ export default function Transfer() {
   const [addedItems, setAddedItems] = useState<any[]>([]);
   const [transactionCost, setTransactionCost] = useState("0");
 
-  const [showSummary, setShowSummary] = useState(false);
-
-  const currencySymbol = selectedReceipt?.currency_code === "KES" ? "KSh" : "$";
+  const currencySymbol =
+    selectedReceipt?.currency_code === "KES" ? "KSh " : "$ ";
 
   /* -------------------- LOAD DATA -------------------- */
   useEffect(() => {
@@ -68,8 +69,8 @@ export default function Transfer() {
   }
 
   async function loadReceipts(colleagueId?: number) {
-    setLoading(true);
     try {
+      setLoading(true);
       const token = await getToken();
       let url = `${API_BASE_URL}/funds-transfer/receipts`;
       if (colleagueId) url += `?colleagueId=${colleagueId}`;
@@ -95,11 +96,12 @@ export default function Transfer() {
   }
 
   function calculateOutstanding(value: string) {
-    const amount = parseFloat(value) || 0;
     if (!selectedReceipt) return;
 
+    const amount = parseFloat(value) || 0;
+
     if (amount > selectedReceipt.balance_amount) {
-      Alert.alert("Error", "Transfer amount exceeds receipt balance");
+      Alert.alert("Error", "Transfer amount exceeds available balance");
       return;
     }
 
@@ -109,14 +111,16 @@ export default function Transfer() {
 
   function addItem() {
     const amount = parseFloat(itemAmount);
+
     if (!subcategory || !itemDescription || isNaN(amount)) {
-      Alert.alert("Error", "Fill all item fields");
+      Alert.alert("Error", "Fill all item fields correctly");
       return;
     }
 
     const totalItems = addedItems.reduce((t, i) => t + i.amount, 0);
+
     if (totalItems + amount > Number(transferAmount)) {
-      Alert.alert("Error", "Items exceed transfer amount");
+      Alert.alert("Error", "Item total exceeds transfer amount");
       return;
     }
 
@@ -124,11 +128,18 @@ export default function Transfer() {
       ...addedItems,
       { subcategory, description: itemDescription, amount },
     ]);
+
+    setSubcategory("");
     setItemDescription("");
     setItemAmount("");
   }
 
   async function submitTransfer() {
+    if (!selectedReceipt || !transferAmount) {
+      Alert.alert("Error", "Please complete the form");
+      return;
+    }
+
     try {
       setLoading(true);
       const token = await getToken();
@@ -159,6 +170,7 @@ export default function Transfer() {
       });
 
       const data = await res.json();
+
       if (data.success) {
         Alert.alert("Success", "Transfer submitted for approval");
         resetForm();
@@ -166,7 +178,6 @@ export default function Transfer() {
         Alert.alert("Error", data.error || "Submission failed");
       }
     } catch (err) {
-      console.error(err);
       Alert.alert("Error", "Network error");
     } finally {
       setLoading(false);
@@ -180,149 +191,149 @@ export default function Transfer() {
     setCategory("");
     setSubcategory("");
     setAddedItems([]);
-    setShowSummary(false);
   }
 
   /* -------------------- UI -------------------- */
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Fund Transfer</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={22} color="#0B3F73" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Fund Transfer</Text>
+      </View>
 
-      {/* Transfer Type */}
-      <Card title="Transfer Options">
-        <Picker
-          selectedValue={transferType}
-          onValueChange={(v) => {
-            setTransferType(v);
-            setSelectedColleague(null);
-            loadReceipts();
-          }}
-        >
-          <Picker.Item label="Transfer My Funds" value="self" />
-          <Picker.Item label="Transfer Colleague's Funds" value="colleague" />
-        </Picker>
-
-        {transferType === "colleague" && (
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Transfer Options */}
+        <Card title="Transfer Options">
           <Picker
-            selectedValue={selectedColleague?.Id}
-            onValueChange={(id) => {
-              const col = colleagues.find((c) => c.Id === id);
-              setSelectedColleague(col);
-              loadReceipts(col.Id);
+            selectedValue={transferType}
+            onValueChange={(v) => {
+              setTransferType(v);
+              setSelectedColleague(null);
+              loadReceipts();
             }}
           >
-            <Picker.Item label="Select colleague" value="" />
-            {colleagues.map((c) => (
-              <Picker.Item key={c.Id} label={c.name} value={c.Id} />
+            <Picker.Item label="Transfer My Funds" value="self" />
+            <Picker.Item label="Transfer Colleague Funds" value="colleague" />
+          </Picker>
+
+          {transferType === "colleague" && (
+            <Picker
+              selectedValue={selectedColleague?.Id}
+              onValueChange={(id) => {
+                const col = colleagues.find((c) => c.Id === id);
+                setSelectedColleague(col);
+                loadReceipts(col?.Id);
+              }}
+            >
+              <Picker.Item label="Select colleague" value="" />
+              {colleagues.map((c) => (
+                <Picker.Item key={c.Id} label={c.name} value={c.Id} />
+              ))}
+            </Picker>
+          )}
+        </Card>
+
+        {/* From */}
+        <Card title="From">
+          <Picker
+            selectedValue={selectedReceipt?.receipt_reference}
+            onValueChange={(ref) => {
+              const r = receipts.find((x) => x.receipt_reference === ref);
+              if (r) onSelectReceipt(r);
+            }}
+          >
+            <Picker.Item label="Select receipt" value="" />
+            {receipts.map((r) => (
+              <Picker.Item
+                key={r.receipt_reference}
+                label={r.receipt_reference}
+                value={r.receipt_reference}
+              />
             ))}
           </Picker>
-        )}
-      </Card>
 
-      {/* From Section */}
-      <Card title="From">
-        <Picker
-          selectedValue={selectedReceipt?.receipt_reference}
-          onValueChange={(ref) => {
-            const r = receipts.find((x) => x.receipt_reference === ref);
-            if (r) onSelectReceipt(r);
-          }}
-        >
-          <Picker.Item label="Select receipt" value="" />
-          {receipts.map((r) => (
-            <Picker.Item
-              key={r.receipt_reference}
-              label={r.receipt_reference}
-              value={r.receipt_reference}
-            />
-          ))}
-        </Picker>
+          {selectedReceipt && (
+            <>
+              <Info
+                label="Balance"
+                value={`${currencySymbol}${selectedReceipt.balance_amount}`}
+              />
 
-        {selectedReceipt && (
-          <>
-            <Info
-              label="Total Amount"
-              value={`${currencySymbol}${selectedReceipt.total_amount}`}
-            />
-            <Info
-              label="Balance"
-              value={`${currencySymbol}${selectedReceipt.balance_amount}`}
-            />
-            <Info label="Category" value={selectedReceipt.category} />
+              <TextInput
+                style={styles.input}
+                placeholder="Transfer Amount"
+                keyboardType="numeric"
+                value={transferAmount}
+                onChangeText={calculateOutstanding}
+              />
 
-            <TextInput
-              style={styles.input}
-              placeholder="Transfer Amount"
-              keyboardType="numeric"
-              value={transferAmount}
-              onChangeText={calculateOutstanding}
-            />
+              <Info
+                label="Outstanding"
+                value={`${currencySymbol}${outstandingAmount}`}
+              />
+            </>
+          )}
+        </Card>
 
-            <Info
-              label="Outstanding"
-              value={`${currencySymbol}${outstandingAmount}`}
-            />
-          </>
-        )}
-      </Card>
+        {/* To */}
+        <Card title="To">
+          <TextInput
+            style={styles.input}
+            placeholder="Category"
+            value={category}
+            onChangeText={setCategory}
+          />
 
-      {/* To Section */}
-      <Card title="To">
-        <TextInput
-          style={styles.input}
-          placeholder="Category"
-          value={category}
-          onChangeText={setCategory}
-        />
+          <TextInput
+            style={styles.input}
+            placeholder="Subcategory"
+            value={subcategory}
+            onChangeText={setSubcategory}
+          />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Subcategory"
-          value={subcategory}
-          onChangeText={setSubcategory}
-        />
+          <TextInput
+            style={styles.input}
+            placeholder="Item Description"
+            value={itemDescription}
+            onChangeText={setItemDescription}
+          />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Item Description"
-          value={itemDescription}
-          onChangeText={setItemDescription}
-        />
+          <TextInput
+            style={styles.input}
+            placeholder="Item Amount"
+            keyboardType="numeric"
+            value={itemAmount}
+            onChangeText={setItemAmount}
+          />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Item Amount"
-          keyboardType="numeric"
-          value={itemAmount}
-          onChangeText={setItemAmount}
-        />
+          <TouchableOpacity style={styles.addBtn} onPress={addItem}>
+            <Ionicons name="add-circle" size={20} color="#fff" />
+            <Text style={styles.addBtnText}>Add Item</Text>
+          </TouchableOpacity>
+        </Card>
 
-        <TouchableOpacity style={styles.addBtn} onPress={addItem}>
-          <Ionicons name="add-circle" size={20} color="#fff" />
-          <Text style={styles.addBtnText}>Add Item</Text>
+        {addedItems.map((item, i) => (
+          <View key={i} style={styles.itemCard}>
+            <Text>{item.subcategory}</Text>
+            <Text>{item.description}</Text>
+            <Text>
+              {currencySymbol}
+              {item.amount}
+            </Text>
+          </View>
+        ))}
+
+        <TouchableOpacity style={styles.submitBtn} onPress={submitTransfer}>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.submitText}>Submit Transfer</Text>
+          )}
         </TouchableOpacity>
-      </Card>
-
-      {/* Items */}
-      {addedItems.map((item, i) => (
-        <View key={i} style={styles.itemCard}>
-          <Text>{item.subcategory}</Text>
-          <Text>{item.description}</Text>
-          <Text>
-            {currencySymbol}
-            {item.amount}
-          </Text>
-        </View>
-      ))}
-
-      <TouchableOpacity style={styles.submitBtn} onPress={submitTransfer}>
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.submitText}>Submit Transfer</Text>
-        )}
-      </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -347,8 +358,22 @@ function Info({ label, value }: any) {
 
 /* -------------------- STYLES -------------------- */
 const styles = StyleSheet.create({
-  container: { padding: 16, backgroundColor: "#f5f7fb" },
-  title: { fontSize: 22, fontWeight: "bold", marginBottom: 16 },
+  safeArea: { flex: 1, backgroundColor: "#f2f2f2" },
+  scroll: { padding: 15 },
+
+  header: {
+    backgroundColor: "#fff",
+    padding: 15,
+    paddingTop: 75, // content starts 2 cm down
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  headerTitle: {
+    marginLeft: 10,
+    fontSize: 18,
+    fontWeight: "bold",
+  },
 
   card: {
     backgroundColor: "#fff",
@@ -356,6 +381,7 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 16,
   },
+
   cardTitle: { fontSize: 16, fontWeight: "600", marginBottom: 10 },
 
   input: {
